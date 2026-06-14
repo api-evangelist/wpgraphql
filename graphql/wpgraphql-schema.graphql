@@ -1,0 +1,3450 @@
+"""
+WPGraphQL SDL Schema
+Derived from source: https://github.com/wp-graphql/wp-graphql (plugins/wp-graphql/src/Type/)
+Version: canonical schema for WPGraphQL plugin (Automattic/Jason Bahl)
+Endpoint: https://example.com/graphql (host-specific)
+
+WPGraphQL exposes WordPress data — posts, pages, users, comments, menus, taxonomies,
+media, plugins, themes, and settings — as a Relay-compliant GraphQL API with
+cursor-based pagination over all connections.
+"""
+
+# ─── Scalars ──────────────────────────────────────────────────────────────────
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+# ─── Interfaces ───────────────────────────────────────────────────────────────
+
+"""
+An object with a globally unique `ID`.
+Follows the Relay Node interface specification.
+"""
+interface Node {
+  """The globally unique ID for the object."""
+  id: ID!
+}
+
+"""
+Objects that can be identified by a URI.
+"""
+interface UniformResourceIdentifiable {
+  """The globally unique ID for the object."""
+  id: ID!
+  """The URI for the object."""
+  uri: String
+  """The unique resource identifier path."""
+  link: String
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+}
+
+"""
+Object that exposes its database primary key.
+"""
+interface DatabaseIdentifier {
+  """The unique identifier stored in the database."""
+  databaseId: Int!
+}
+
+"""
+A node that can have comments associated with it.
+"""
+interface NodeWithComments {
+  """The number of comments. Even though WPGraphQL denotes this field as an integer, in WordPress, this field should be saved as a numeric string for backward compatibility."""
+  commentCount: Int
+  """Whether the comments are open or closed for this particular post."""
+  commentStatus: String
+}
+
+"""
+A node that can have an author assigned to it.
+"""
+interface NodeWithAuthor {
+  """Connection between the NodeWithAuthor type and the User type."""
+  author: NodeWithAuthorToUserConnectionEdge
+  """The database identifier of the author of the node."""
+  authorDatabaseId: Int
+  """The globally unique identifier of the author of the node."""
+  authorId: ID
+}
+
+"""
+A node that can have a featured image set.
+"""
+interface NodeWithFeaturedImage {
+  """Connection between the NodeWithFeaturedImage type and the MediaItem type."""
+  featuredImage: NodeWithFeaturedImageToMediaItemConnectionEdge
+  """The database identifier of the featured image."""
+  featuredImageDatabaseId: Int
+  """Globally unique ID of the featured image."""
+  featuredImageId: ID
+}
+
+"""
+A node with a title.
+"""
+interface NodeWithTitle {
+  """The title of the post. This is currently just the raw title. An amendment to support rendered title needs to be investigated."""
+  title(format: PostObjectFieldFormatEnum): String
+}
+
+"""
+A node with an excerpt.
+"""
+interface NodeWithExcerpt {
+  """The excerpt of the post."""
+  excerpt(format: PostObjectFieldFormatEnum): String
+}
+
+"""
+A node with content editor data.
+"""
+interface NodeWithContentEditor {
+  """The content of the post."""
+  content(format: PostObjectFieldFormatEnum): String
+}
+
+"""
+A node that can have page attributes (menu order and page template).
+"""
+interface NodeWithPageAttributes {
+  """A field used for ordering posts. This is typically used with nav menu items or for special ordering of hierarchical content types."""
+  menuOrder: Int
+}
+
+"""
+A node that supports revisions.
+"""
+interface NodeWithRevisions {
+  """True if the node is a revision of another node."""
+  isRevision: Boolean
+}
+
+"""
+A node that can have trackbacks and pingbacks.
+"""
+interface NodeWithTrackbacks {
+  """URLs that have been pinged."""
+  pinged: [String]
+  """URLs queued to be pinged."""
+  toPing: [String]
+  """Whether the pings are open or closed for this particular post."""
+  pingStatus: String
+}
+
+"""
+A node that can be previewed.
+"""
+interface Previewable {
+  """Whether the object is a node in the preview state."""
+  isPreview: Boolean
+  """The preview version of this node."""
+  preview: PreviewableToPreviewConnectionEdge
+}
+
+"""
+Content nodes that are hierarchical.
+"""
+interface HierarchicalContentNode {
+  """Database id of the parent node."""
+  parentDatabaseId: Int
+  """The globally unique identifier of the parent node."""
+  parentId: ID
+}
+
+"""
+Hierarchical term nodes.
+"""
+interface HierarchicalTermNode {
+  """Database id of the parent node."""
+  parentDatabaseId: Int
+  """The globally unique identifier of the parent node."""
+  parentId: ID
+}
+
+"""
+A hierarchical node.
+"""
+interface HierarchicalNode {
+  """Database id of the parent node."""
+  parentDatabaseId: Int
+  """The globally unique identifier of the parent node."""
+  parentId: ID
+}
+
+"""
+A comment author.
+"""
+interface Commenter {
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """The email for the comment author."""
+  email: String
+  """The globally unique identifier for the comment author."""
+  id: ID!
+  """Whether the author information is considered restricted."""
+  isRestricted: Boolean
+  """The name of the author."""
+  name: String
+  """The URL of the author's website."""
+  url: String
+}
+
+"""
+A menu item linkable target.
+"""
+interface MenuItemLinkable {
+  """The globally unique ID for the object."""
+  id: ID!
+  """The database ID of the node."""
+  databaseId: Int!
+  """The URI for the node."""
+  uri: String
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+}
+
+"""
+A term node (category, tag, or other taxonomy term).
+"""
+interface TermNode {
+  """The globally unique ID for the object."""
+  id: ID!
+  """The number of objects connected to the object."""
+  count: Int
+  """The database id of the object."""
+  databaseId: Int!
+  """The description of the object."""
+  description: String
+  """Url to the object."""
+  link: String
+  """The human friendly name of the object."""
+  name: String
+  """An alphanumeric identifier for the object unique to its type."""
+  slug: String
+  """The name of the taxonomy that the object is associated with."""
+  taxonomyName: String
+  """The ID of the term group that this term object belongs to."""
+  termGroupId: Int
+  """The taxonomy ID that the object is associated with."""
+  termTaxonomyId: Int
+  """The unique resource identifier path."""
+  uri: String
+}
+
+"""
+A WordPress content node.
+"""
+interface ContentNode {
+  """The globally unique ID for the object."""
+  id: ID!
+  """The locally unique ID for the object within its post type."""
+  databaseId: Int!
+  """Post publishing date."""
+  date: String
+  """The publishing date set in GMT."""
+  dateGmt: String
+  """The desired slug of the post."""
+  desiredSlug: String
+  """If a user has edited the node within the past 15 seconds, this will return the user that last edited. Null if the edit lock doesn't exist or is greater than 15 seconds."""
+  editingLockedBy: ContentNodeToEditLockConnectionEdge
+  """The RSS enclosure for the object."""
+  enclosure: String
+  """The global unique identifier for this post. This currently matches the value stored in WP_Post->guid and the guid column in the "post_objects" database table."""
+  guid: String
+  """The globally unique identifier of the node."""
+  id: ID!
+  """Whether the object is a node in the preview state."""
+  isPreview: Boolean
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """The permalink of the post."""
+  link: String
+  """The local modified time for a post. If a post was recently updated the modified field will change to match the corresponding time."""
+  modified: String
+  """The GMT modified time for a post. If a post was recently updated the modified field will change to match the corresponding time in GMT."""
+  modifiedGmt: String
+  """The database id of the preview node."""
+  previewRevisionDatabaseId: Int
+  """Whether the object is a revision."""
+  previewRevisionId: ID
+  """The uri slug for the post. This is equivalent to the WP_Post->post_name field and the post_name column in the database for the "post_objects" table."""
+  slug: String
+  """The current status of the object."""
+  status: String
+  """The template assigned to a node of content."""
+  template: ContentTemplate
+  """The unique resource identifier path."""
+  uri: String
+}
+
+"""
+A content template.
+"""
+interface ContentTemplate {
+  """The name of the template."""
+  templateName: String
+}
+
+"""
+An enqueued asset (script or stylesheet).
+"""
+interface EnqueuedAsset {
+  """Dependencies needed to use this asset."""
+  dependencies: [EnqueuedScript]
+  """Extra information needed for the script."""
+  extra: String
+  """The handle of the enqueued asset."""
+  handle: String
+  """The ID of the enqueued asset."""
+  id: ID!
+  """The source of the asset."""
+  src: String
+  """The version of the enqueued asset."""
+  version: String
+}
+
+# ─── Enums ────────────────────────────────────────────────────────────────────
+
+"""Sort direction for ordered results."""
+enum OrderEnum {
+  """Results ordered from lowest to highest values (A-Z, oldest-newest)."""
+  ASC
+  """Results ordered from highest to lowest values (Z-A, newest-oldest)."""
+  DESC
+}
+
+"""Logical operator for combining multiple query conditions."""
+enum RelationEnum {
+  """All conditions must match (more restrictive filtering)."""
+  AND
+  """Any condition can match (more inclusive filtering)."""
+  OR
+}
+
+"""Format of field output."""
+enum PostObjectFieldFormatEnum {
+  """Applies the default WordPress kses filters."""
+  RENDERED
+  """Applies no additional filters."""
+  RAW
+}
+
+"""The status of a post object."""
+enum PostStatusEnum {
+  """Content publicly visible to all visitors."""
+  PUBLISH
+  """Content saved but not yet published."""
+  DRAFT
+  """Content awaiting review before publication."""
+  PENDING
+  """Content visible to authorized users only."""
+  PRIVATE
+  """Content moved to trash."""
+  TRASH
+  """Scheduled content not yet published."""
+  FUTURE
+  """Content that is auto-draft."""
+  AUTO_DRAFT
+  """Content that inherits status from its parent."""
+  INHERIT
+}
+
+"""The type of idType to identify a comment node."""
+enum CommentNodeIdTypeEnum {
+  """Identify a resource by the Database ID."""
+  DATABASE_ID
+  """Identify a resource by the (hashed) Global ID."""
+  ID
+}
+
+"""The status of a comment object."""
+enum CommentStatusEnum {
+  """Comments with approved status."""
+  APPROVE
+  """Comments with hold status."""
+  HOLD
+  """Comments with spam status."""
+  SPAM
+  """Comments with trash status."""
+  TRASH
+}
+
+"""The type of idType to identify a user node."""
+enum UserNodeIdTypeEnum {
+  """Identify a resource by the Database ID."""
+  DATABASE_ID
+  """Identify a resource by email address."""
+  EMAIL
+  """Identify a resource by the (hashed) Global ID."""
+  ID
+  """Identify a resource by the slug."""
+  SLUG
+  """Identify a resource by the URI."""
+  URI
+  """Identify a user by their username (login)."""
+  USERNAME
+}
+
+"""Column to search users by."""
+enum UsersConnectionSearchColumnEnum {
+  ADMIN_COLOR
+  CAPABILITIES
+  DISPLAY_NAME
+  EMAIL
+  ID
+  LOGIN
+  NICENAME
+  REGISTERED
+  URL
+}
+
+"""Attributes to order users by."""
+enum UsersConnectionOrderbyEnum {
+  DISPLAY_NAME
+  EMAIL
+  LOGIN
+  LOGIN_IN
+  NICE_NAME
+  NICE_NAME_IN
+  REGISTERED
+  URL
+}
+
+"""Attributes to order posts by."""
+enum PostObjectsConnectionOrderbyEnum {
+  """Order by the author of the content."""
+  AUTHOR
+  """Order by the number of comments on the content."""
+  COMMENT_COUNT
+  """Order by publication date."""
+  DATE
+  """Maintain custom order of IDs specified in the IN field."""
+  IN
+  """Order by menu position."""
+  MENU_ORDER
+  """Order by last modified date."""
+  MODIFIED
+  """Maintain custom order of slugs specified in the NAME_IN field."""
+  NAME_IN
+  """Order by parent."""
+  PARENT
+  """Order by slug."""
+  SLUG
+  """Order by title."""
+  TITLE
+}
+
+"""The column to compare dates in a date query."""
+enum PostObjectsConnectionDateColumnEnum {
+  DATE
+  MODIFIED
+}
+
+"""Attributes to order term objects by."""
+enum TermObjectsConnectionOrderbyEnum {
+  COUNT
+  DESCRIPTION
+  NAME
+  SLUG
+  TERM_GROUP
+  TERM_ID
+  TERM_ORDER
+}
+
+"""The type of idType to identify a content node."""
+enum ContentNodeIdTypeEnum {
+  DATABASE_ID
+  ID
+  URI
+  SLUG
+  SOURCE_URL
+}
+
+"""The type of idType to identify a taxonomy."""
+enum TaxonomyIdTypeEnum {
+  DATABASE_ID
+  ID
+  NAME
+  SLUG
+}
+
+"""The type of idType to identify a term node."""
+enum TermNodeIdTypeEnum {
+  DATABASE_ID
+  ID
+  NAME
+  SLUG
+  URI
+}
+
+"""Registered content types."""
+enum ContentTypeEnum {
+  ATTACHMENT
+  PAGE
+  POST
+}
+
+"""The type of idType to identify a content type."""
+enum ContentTypeIdTypeEnum {
+  ID
+  NAME
+}
+
+"""The type of idType to identify a menu node."""
+enum MenuNodeIdTypeEnum {
+  DATABASE_ID
+  ID
+  LOCATION
+  NAME
+  SLUG
+}
+
+"""The type of idType to identify a menu item node."""
+enum MenuItemNodeIdTypeEnum {
+  DATABASE_ID
+  ID
+}
+
+"""Menu location enums are registered by the active theme. Common values shown."""
+enum MenuLocationEnum {
+  PRIMARY
+  FOOTER
+  HEADER
+}
+
+"""Status for a plugin."""
+enum PluginStatusEnum {
+  ACTIVE
+  DROP_IN
+  INACTIVE
+  MUST_USE
+  PAUSED
+  RECENTLY_ACTIVATED
+  UPGRADE
+}
+
+"""Size of a media item."""
+enum MediaItemSizeEnum {
+  LARGE
+  MEDIUM
+  MEDIUM_LARGE
+  THUMBNAIL
+  ONE_NINETY_SIX_BY_ONE_NINETY_SIX
+  POST_THUMBNAIL
+}
+
+"""Status of a media item."""
+enum MediaItemStatusEnum {
+  AUTO_DRAFT
+  INHERIT
+  PRIVATE
+  TRASH
+}
+
+"""Rating for avatars (Gravatar rating system)."""
+enum AvatarRatingEnum {
+  G
+  PG
+  R
+  X
+}
+
+"""Location within the page where a script is loaded."""
+enum ScriptLoadingGroupLocationEnum {
+  HEADER
+  FOOTER
+}
+
+"""Strategy for loading a script."""
+enum ScriptLoadingStrategyEnum {
+  ASYNC
+  DEFER
+}
+
+# ─── Input Types ──────────────────────────────────────────────────────────────
+
+"""Input for date components in boundary queries."""
+input DateInput {
+  """4 digit year (e.g. 2024)."""
+  year: Int
+  """Month number (from 1 to 12)."""
+  month: Int
+  """Day of the month (from 1 to 31)."""
+  day: Int
+}
+
+"""Filter results by a date range."""
+input DateQueryInput {
+  """4 digit year (e.g. 2024)."""
+  year: Int
+  """Month number (from 1 to 12)."""
+  month: Int
+  """Week of the year (from 0 to 53)."""
+  week: Int
+  """Day of the month (from 1 to 31)."""
+  day: Int
+  """Hour (from 0 to 23)."""
+  hour: Int
+  """Minute (from 0 to 59)."""
+  minute: Int
+  """Second (0 to 59)."""
+  second: Int
+  """Return nodes after this date."""
+  after: DateInput
+  """Return nodes before this date."""
+  before: DateInput
+  """For after/before, whether exact value should be matched or not."""
+  inclusive: Boolean
+  """Column to query against."""
+  column: PostObjectsConnectionDateColumnEnum
+  """Relationship to other date query arrays."""
+  relation: RelationEnum
+}
+
+"""Order by field and direction for post object connections."""
+input PostObjectsConnectionOrderbyInput {
+  """The field to order the connection by."""
+  field: PostObjectsConnectionOrderbyEnum!
+  """Possible directions in which to order a list of items."""
+  order: OrderEnum!
+}
+
+"""Order by field and direction for user connections."""
+input UsersConnectionOrderbyInput {
+  """The field to order the connection by."""
+  field: UsersConnectionOrderbyEnum!
+  """Possible directions in which to order a list of items."""
+  order: OrderEnum!
+}
+
+"""Arguments for filtering post object connections."""
+input PostObjectsConnectionWhereArgs {
+  """Show posts with a specific author ID."""
+  authorIn: [ID]
+  """Show posts without these author IDs."""
+  authorNotIn: [ID]
+  """Category ID."""
+  categoryId: Int
+  """Slugs of categories to include."""
+  categoryIn: [ID]
+  """Slugs of categories to exclude."""
+  categoryNotIn: [ID]
+  """Filter by connected category name."""
+  categoryName: String
+  """Date query parameters."""
+  dateQuery: DateQueryInput
+  """True for objects with passwords; False for objects without passwords; null for all objects with or without passwords."""
+  hasPassword: Boolean
+  """Specific database ID of the object."""
+  id: Int
+  """Array of IDs for the objects to retrieve."""
+  in: [ID]
+  """Get objects with a specific mimeType property."""
+  mimeType: MimeTypeEnum
+  """Slug / post_name of the object."""
+  name: String
+  """Objects that are children of other objects. Pass the parent IDs."""
+  nameIn: [String]
+  """Retrieve IDs not specified in the array."""
+  notIn: [ID]
+  """What paramater to use to order the objects by."""
+  orderby: [PostObjectsConnectionOrderbyInput]
+  """Use ID to return only children. Use 0 to return only top-level items."""
+  parent: ID
+  """Specify objects whose parent is in an array."""
+  parentIn: [ID]
+  """Specify objects whose parent is not in an array."""
+  parentNotIn: [ID]
+  """Show posts with a specific password."""
+  password: String
+  """Show Posts based on a keyword search."""
+  search: String
+  """Retrieve posts where post status is in an array."""
+  stati: [PostStatusEnum]
+  """Show posts with a specific status."""
+  status: PostStatusEnum
+  """Tag Slug. Comma-separated list of tags."""
+  tag: String
+  """Tag id."""
+  tagId: String
+  """Array of tag IDs, used to display objects from one tag OR another."""
+  tagIn: [ID]
+  """Array of tag IDs, used to display objects from one tag OR another."""
+  tagNotIn: [ID]
+  """Array of tag slugs, used to display objects from one tag OR another."""
+  tagSlugAnd: [String]
+  """Array of tag slugs, used to exclude objects in specified tags."""
+  tagSlugIn: [String]
+  """Title of the object."""
+  title: String
+}
+
+"""Arguments for filtering comment connections."""
+input CommentsConnectionWhereArgs {
+  """Comment author email address."""
+  authorEmail: String
+  """Array of author IDs to include comments for."""
+  authorIn: [ID]
+  """Array of author IDs to exclude comments for."""
+  authorNotIn: [ID]
+  """Comment author URL."""
+  authorUrl: String
+  """Array of comment IDs to include."""
+  commentIn: [ID]
+  """Array of IDs of users whose unapproved comments will be returned."""
+  commentNotIn: [ID]
+  """Include comments of a given type."""
+  commentType: String
+  """Include comments from a given array of comment types."""
+  commentTypeIn: [String]
+  """Exclude comments from a given array of comment types."""
+  commentTypeNotIn: String
+  """Content object author ID to limit results by."""
+  contentAuthor: [ID]
+  """Array of content object IDs to include affiliated comments for."""
+  contentAuthorIn: [ID]
+  """Array of content object IDs to exclude affiliated comments for."""
+  contentAuthorNotIn: [ID]
+  """Content object ID to limit results by."""
+  contentId: ID
+  """Array of content object IDs to include affiliated comments for."""
+  contentIdIn: [ID]
+  """Array of content object IDs to exclude affiliated comments for."""
+  contentIdNotIn: [ID]
+  """Content object name (i.e. slug) to retrieve affiliated comments for."""
+  contentName: String
+  """Content Object parent ID to retrieve affiliated comments for."""
+  contentParent: Int
+  """Array of content object statuses to retrieve affiliated comments for. Pass 'any' to match any value."""
+  contentStatus: [PostStatusEnum]
+  """Content object type or array of types to retrieve affiliated comments for."""
+  contentType: [ContentTypeEnum]
+  """Array of IDs or email addresses of users whose unapproved comments will be returned."""
+  includeUnapproved: [ID]
+  """Karma score to retrieve matching comments for."""
+  karma: Int
+  """The cardinality of the order of the connection."""
+  order: OrderEnum
+  """Field to order the comments by."""
+  orderby: CommentsConnectionOrderbyEnum
+  """Parent ID of comment to retrieve children of."""
+  parent: Int
+  """Array of parent IDs of comments to retrieve children for."""
+  parentIn: [ID]
+  """Array of parent IDs of comments *not* to retrieve children for."""
+  parentNotIn: [ID]
+  """Search term(s) to retrieve matching comments for."""
+  search: String
+  """Comment status to limit results by."""
+  status: String
+  """Include comments for a specific user ID."""
+  userId: ID
+}
+
+"""Ordering options for comment connections."""
+enum CommentsConnectionOrderbyEnum {
+  COMMENT_AGENT
+  COMMENT_APPROVED
+  COMMENT_AUTHOR
+  COMMENT_AUTHOR_EMAIL
+  COMMENT_AUTHOR_IP
+  COMMENT_AUTHOR_URL
+  COMMENT_CONTENT
+  COMMENT_DATE
+  COMMENT_DATE_GMT
+  COMMENT_ID
+  COMMENT_IN
+  COMMENT_KARMA
+  COMMENT_PARENT
+  COMMENT_POST_ID
+  COMMENT_TYPE
+  USER_ID
+}
+
+"""MIME types recognized by WordPress."""
+enum MimeTypeEnum {
+  APPLICATION_JAVA
+  APPLICATION_MSWORD
+  APPLICATION_OCTET_STREAM
+  APPLICATION_ONENOTE
+  APPLICATION_OXPS
+  APPLICATION_PDF
+  APPLICATION_RAR
+  APPLICATION_RTF
+  APPLICATION_TTAF_XML
+  APPLICATION_VND_APPLE_KEYNOTE
+  APPLICATION_VND_APPLE_NUMBERS
+  APPLICATION_VND_APPLE_PAGES
+  APPLICATION_VND_MS_ACCESS
+  APPLICATION_VND_MS_EXCEL
+  APPLICATION_VND_MS_EXCEL_ADDIN_MACROENABLED_12
+  APPLICATION_VND_MS_EXCEL_SHEET_BINARY_MACROENABLED_12
+  APPLICATION_VND_MS_EXCEL_SHEET_MACROENABLED_12
+  APPLICATION_VND_MS_EXCEL_TEMPLATE_MACROENABLED_12
+  APPLICATION_VND_MS_POWERPOINT
+  APPLICATION_VND_MS_PROJECT
+  APPLICATION_VND_MS_WORD_DOCUMENT_MACROENABLED_12
+  APPLICATION_VND_MS_WORD_TEMPLATE_MACROENABLED_12
+  APPLICATION_VND_MS_WORKS
+  APPLICATION_VND_MS_WPL
+  APPLICATION_VND_MS_XPSDOCUMENT
+  APPLICATION_VND_OASIS_OPENDOCUMENT_CHART
+  APPLICATION_VND_OASIS_OPENDOCUMENT_DATABASE
+  APPLICATION_VND_OASIS_OPENDOCUMENT_FORMULA
+  APPLICATION_VND_OASIS_OPENDOCUMENT_GRAPHICS
+  APPLICATION_VND_OASIS_OPENDOCUMENT_PRESENTATION
+  APPLICATION_VND_OASIS_OPENDOCUMENT_SPREADSHEET
+  APPLICATION_VND_OASIS_OPENDOCUMENT_TEXT
+  APPLICATION_VND_OPENXMLFORMATS_OFFICEDOCUMENT_PRESENTATIONML_PRESENTATION
+  APPLICATION_VND_OPENXMLFORMATS_OFFICEDOCUMENT_PRESENTATIONML_SLIDE
+  APPLICATION_VND_OPENXMLFORMATS_OFFICEDOCUMENT_PRESENTATIONML_SLIDESHOW
+  APPLICATION_VND_OPENXMLFORMATS_OFFICEDOCUMENT_PRESENTATIONML_TEMPLATE
+  APPLICATION_VND_OPENXMLFORMATS_OFFICEDOCUMENT_SPREADSHEETML_SHEET
+  APPLICATION_VND_OPENXMLFORMATS_OFFICEDOCUMENT_SPREADSHEETML_TEMPLATE
+  APPLICATION_VND_OPENXMLFORMATS_OFFICEDOCUMENT_WORDPROCESSINGML_DOCUMENT
+  APPLICATION_VND_OPENXMLFORMATS_OFFICEDOCUMENT_WORDPROCESSINGML_TEMPLATE
+  APPLICATION_WORDPERFECT
+  APPLICATION_X_7Z_COMPRESSED
+  APPLICATION_X_GZIP
+  APPLICATION_X_TAR
+  APPLICATION_ZIP
+  AUDIO_AAC
+  AUDIO_FLAC
+  AUDIO_MIDI
+  AUDIO_MPEG
+  AUDIO_OGG
+  AUDIO_WAV
+  AUDIO_X_MATROSKA
+  AUDIO_X_MS_WAX
+  AUDIO_X_MS_WMA
+  AUDIO_X_REALAUDIO
+  IMAGE_BMP
+  IMAGE_GIF
+  IMAGE_HEIC
+  IMAGE_JPEG
+  IMAGE_PNG
+  IMAGE_SVG_XML
+  IMAGE_TIFF
+  IMAGE_WEBP
+  IMAGE_X_ICON
+  TEXT_CALENDAR
+  TEXT_CSS
+  TEXT_CSV
+  TEXT_PLAIN
+  TEXT_RICHTEXT
+  TEXT_TAB_SEPARATED_VALUES
+  TEXT_VTT
+  VIDEO_3GPP
+  VIDEO_3GPP2
+  VIDEO_AVI
+  VIDEO_DIVX
+  VIDEO_MP4
+  VIDEO_MPEG
+  VIDEO_OGG
+  VIDEO_QUICKTIME
+  VIDEO_WEBM
+  VIDEO_X_FLV
+  VIDEO_X_MATROSKA
+  VIDEO_X_MS_ASF
+  VIDEO_X_MS_WM
+  VIDEO_X_MS_WMV
+  VIDEO_X_MS_WMX
+}
+
+"""Input for creating a comment."""
+input CreateCommentInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """The ID of the post object the comment is replying to."""
+  commentOn: Int
+  """Content of the comment."""
+  content: String
+  """The date of the object. Preferable to enter as year/month/day ( e.g. 01/31/2021 ) as it is formatted to make the query more exact."""
+  date: String
+  """The approval status of the comment."""
+  status: CommentStatusEnum
+  """The ID of the user the comment is written for."""
+  author: String
+  """The email of the user the comment is written for."""
+  authorEmail: String
+  """The url of the user the comment is written for."""
+  authorUrl: String
+  """The ID of the parent object."""
+  parent: ID
+}
+
+"""Input for updating a comment."""
+input UpdateCommentInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """The approval status of the comment"""
+  approved: String
+  """The name of the comment's author."""
+  author: String
+  """The email of the comment's author."""
+  authorEmail: String
+  """The url of the comment's author."""
+  authorUrl: String
+  """The content of the comment."""
+  content: String
+  """The date of the object."""
+  date: String
+  """The ID of the comment being updated."""
+  id: ID!
+  """The ID of the parent comment."""
+  parent: ID
+  """The approval status of the comment."""
+  status: CommentStatusEnum
+}
+
+"""Input for creating a post."""
+input CreatePostInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """The userId to assign as the author of the object."""
+  authorId: ID
+  """Set connections between the post and categories."""
+  categories: PostCategoriesInput
+  """The comment status for the object."""
+  commentStatus: String
+  """The content of the object."""
+  content: String
+  """The date of the object. Preferable to enter as year/month/day (e.g. 01/31/2021)."""
+  date: String
+  """The excerpt of the object."""
+  excerpt: String
+  """A field used for ordering posts. This is typically used with nav menu items or for special ordering of hierarchical content types."""
+  menuOrder: Int
+  """The password used to protect the content of the object."""
+  password: String
+  """The ping status for the object."""
+  pingStatus: String
+  """URLs that have been pinged."""
+  pinged: [String]
+  """The slug of the object."""
+  slug: String
+  """The status of the object."""
+  status: PostStatusEnum
+  """Set connections between the post and tags."""
+  tags: PostTagsInput
+  """The title of the object."""
+  title: String
+  """URLs queued to be pinged."""
+  toPing: [String]
+}
+
+"""Input for updating a post."""
+input UpdatePostInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """The userId to assign as the author of the object."""
+  authorId: ID
+  """Set connections between the post and categories."""
+  categories: PostCategoriesInput
+  """The comment status for the object."""
+  commentStatus: String
+  """The content of the object."""
+  content: String
+  """The date of the object."""
+  date: String
+  """The excerpt of the object."""
+  excerpt: String
+  """The ID of the post being updated."""
+  id: ID!
+  """A field used for ordering posts."""
+  menuOrder: Int
+  """The password used to protect the content of the object."""
+  password: String
+  """The ping status for the object."""
+  pingStatus: String
+  """URLs that have been pinged."""
+  pinged: [String]
+  """The slug of the object."""
+  slug: String
+  """The status of the object."""
+  status: PostStatusEnum
+  """Set connections between the post and tags."""
+  tags: PostTagsInput
+  """The title of the object."""
+  title: String
+  """URLs queued to be pinged."""
+  toPing: [String]
+}
+
+"""Input for deleting a post."""
+input DeletePostInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """Whether the object should be force deleted instead of being moved to the trash."""
+  forceDelete: Boolean
+  """The ID of the post to delete."""
+  id: ID!
+}
+
+"""Category connections for posts."""
+input PostCategoriesInput {
+  """Flag for whether to append content to the post instead of replacing it."""
+  append: Boolean
+  """Array of category term IDs."""
+  nodes: [PostCategoriesNodeInput]
+}
+
+input PostCategoriesNodeInput {
+  """The description of the category."""
+  description: String
+  """The globally unique ID of an existing category term."""
+  id: ID
+  """The name of the category term."""
+  name: String
+  """The slug of the category term."""
+  slug: String
+}
+
+"""Tag connections for posts."""
+input PostTagsInput {
+  """Flag for whether to append tags to the post instead of replacing."""
+  append: Boolean
+  """Array of tag term IDs."""
+  nodes: [PostTagsNodeInput]
+}
+
+input PostTagsNodeInput {
+  """The description of the tag."""
+  description: String
+  """The globally unique ID of an existing tag term."""
+  id: ID
+  """The name of the tag term."""
+  name: String
+  """The slug of the tag term."""
+  slug: String
+}
+
+"""Input for creating a page."""
+input CreatePageInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """The userId to assign as the author of the object."""
+  authorId: ID
+  """The comment status for the object."""
+  commentStatus: String
+  """The content of the object."""
+  content: String
+  """The date of the object."""
+  date: String
+  """The excerpt of the object."""
+  excerpt: String
+  """A field used for ordering posts."""
+  menuOrder: Int
+  """The ID of the parent object."""
+  parentId: ID
+  """The password used to protect the content of the object."""
+  password: String
+  """The ping status for the object."""
+  pingStatus: String
+  """The slug of the object."""
+  slug: String
+  """The status of the object."""
+  status: PostStatusEnum
+  """The title of the object."""
+  title: String
+}
+
+"""Input for updating a page."""
+input UpdatePageInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """The userId to assign as the author of the object."""
+  authorId: ID
+  """The comment status for the object."""
+  commentStatus: String
+  """The content of the object."""
+  content: String
+  """The date of the object."""
+  date: String
+  """The excerpt of the object."""
+  excerpt: String
+  """The ID of the page being updated."""
+  id: ID!
+  """A field used for ordering posts."""
+  menuOrder: Int
+  """The ID of the parent object."""
+  parentId: ID
+  """The password used to protect the content of the object."""
+  password: String
+  """The ping status for the object."""
+  pingStatus: String
+  """The slug of the object."""
+  slug: String
+  """The status of the object."""
+  status: PostStatusEnum
+  """The title of the object."""
+  title: String
+}
+
+"""Input for deleting a page."""
+input DeletePageInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """Whether the object should be force deleted instead of being moved to the trash."""
+  forceDelete: Boolean
+  """The ID of the page to delete."""
+  id: ID!
+}
+
+"""Input for creating a user."""
+input CreateUserInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """User's AOL IM account."""
+  aim: String
+  """A string containing content about the user."""
+  description: String
+  """A string that will be shown on the site. Defaults to user's username. It is likely that you will want to change this, for both appearance and security through obscurity (that is if you dont use and delete the default admin user)."""
+  displayName: String
+  """A string containing the user's email address."""
+  email: String
+  """The user's first name."""
+  firstName: String
+  """User's Jabber account."""
+  jabber: String
+  """The user's last name."""
+  lastName: String
+  """User's locale."""
+  locale: String
+  """A string that contains a URL-friendly name for the user. The default is the user's username."""
+  nicename: String
+  """The user's nickname, defaults to the user's username."""
+  nickname: String
+  """A string that contains the plain text password for the user."""
+  password: String
+  """The date the user registered. Format is Y-m-d H:i:s."""
+  registered: String
+  """A string for whether to enable the rich editor or not. False if not empty."""
+  richEditing: String
+  """An array of roles to be assigned to the user."""
+  roles: [String]
+  """A string that contains the user's username."""
+  username: String!
+  """A string containing the user's URL for the user's web site."""
+  websiteUrl: String
+  """User's Yahoo IM account."""
+  yim: String
+}
+
+"""Input for updating a user."""
+input UpdateUserInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  """A string containing content about the user."""
+  description: String
+  """A string that will be shown on the site."""
+  displayName: String
+  """A string containing the user's email address."""
+  email: String
+  """The user's first name."""
+  firstName: String
+  """The ID of the user."""
+  id: ID!
+  """The user's last name."""
+  lastName: String
+  """User's locale."""
+  locale: String
+  """A string containing a URL-friendly name for the user."""
+  nicename: String
+  """The user's nickname."""
+  nickname: String
+  """A string that contains the plain text password for the user."""
+  password: String
+  """An array of roles to be assigned to the user."""
+  roles: [String]
+  """A string containing the user's URL."""
+  websiteUrl: String
+}
+
+"""Input for deleting a user."""
+input DeleteUserInput {
+  """This is an ID that can be passed to a mutation by the client to track the progress of mutations and catch possible duplicate mutation submissions."""
+  clientMutationId: String
+  /**The ID of the user you want to delete */
+  id: ID!
+  """Reassign posts and links to new User ID."""
+  reassignId: ID
+}
+
+"""Input for sending a password reset email."""
+input SendPasswordResetEmailInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """A string that contains the user's username or email address."""
+  username: String!
+}
+
+"""Input for resetting a user password."""
+input ResetUserPasswordInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """Password reset key."""
+  key: String
+  """The user's login (username)."""
+  login: String
+  """The new password."""
+  password: String
+}
+
+"""Input for creating a media item."""
+input CreateMediaItemInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """The userId to assign as the author of the object."""
+  authorId: ID
+  """The caption for the resource."""
+  caption: String
+  """The comment status for the object."""
+  commentStatus: String
+  """The content of the object."""
+  content: String
+  """The date of the object."""
+  date: String
+  """The date (in GMT Zone) of the object."""
+  dateGmt: String
+  """Description of the mediaItem."""
+  description: String
+  """The file name of the mediaItem."""
+  filePath: String
+  """The file type of the mediaItem."""
+  fileType: MimeTypeEnum
+  """The WordPress post ID or the graphQL postId of the parent object."""
+  parentId: ID
+  """The ping status for the object."""
+  pingStatus: String
+  """The slug of the object."""
+  slug: String
+  """The status of the mediaItem."""
+  status: MediaItemStatusEnum
+  """The title of the object."""
+  title: String
+}
+
+"""Input for creating a term object."""
+input CreateCategoryInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """The slug that the category will be an alias of."""
+  aliasOf: String
+  """The description of the category object."""
+  description: String
+  """The name of the category object to mutate."""
+  name: String!
+  """The ID of the category that should be set as the parent."""
+  parentId: ID
+  """If this argument exists then the slug will be checked to see if it is not an existing valid term. If that check succeeds (it is not a valid term), then it is added and the term id is given. If it fails, then a check is made to whether the taxonomy is hierarchical and the parent argument is not empty. If the second check succeeds, the term will be inserted and the term id will be given. If the slug argument is empty, then it will be calculated from the term name."""
+  slug: String
+}
+
+"""Input for updating a category."""
+input UpdateCategoryInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """The slug that the category will be an alias of."""
+  aliasOf: String
+  """The description of the category object."""
+  description: String
+  """The ID of the category object to update."""
+  id: ID!
+  """The name of the category object to mutate."""
+  name: String
+  """The ID of the category that should be set as the parent."""
+  parentId: ID
+  """If this argument exists then the slug will be checked."""
+  slug: String
+}
+
+"""Input for deleting a category."""
+input DeleteCategoryInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """The ID of the category to delete."""
+  id: ID!
+}
+
+"""Input for creating a tag."""
+input CreateTagInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """The slug that the tag will be an alias of."""
+  aliasOf: String
+  """The description of the tag object."""
+  description: String
+  """The name of the tag object to mutate."""
+  name: String!
+  """If this argument exists then the slug will be checked."""
+  slug: String
+}
+
+"""Input for updating a tag."""
+input UpdateTagInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """The slug that the tag will be an alias of."""
+  aliasOf: String
+  """The description of the tag object."""
+  description: String
+  """The ID of the tag object to update."""
+  id: ID!
+  """The name of the tag object to mutate."""
+  name: String
+  """If this argument exists then the slug will be checked."""
+  slug: String
+}
+
+"""Input for deleting a tag."""
+input DeleteTagInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """The ID of the tag to delete."""
+  id: ID!
+}
+
+"""Input for updating site settings."""
+input UpdateSettingsInput {
+  """This is an ID that can be passed to a mutation by the client."""
+  clientMutationId: String
+  """Allow people to submit comments on new posts."""
+  discussionSettingsDefaultCommentStatus: String
+  """Allow link notifications from other blogs (pingbacks and trackbacks) on new articles."""
+  discussionSettingsDefaultPingStatus: String
+  """A date format for all date strings."""
+  generalSettingsDateFormat: String
+  """Site tagline."""
+  generalSettingsDescription: String
+  """WordPress locale code."""
+  generalSettingsLanguage: String
+  """A day number of the week that the week should start on."""
+  generalSettingsStartOfWeek: Int
+  """A time format for all time strings."""
+  generalSettingsTimeFormat: String
+  """A city in the same timezone as you."""
+  generalSettingsTimezone: String
+  """Site title."""
+  generalSettingsTitle: String
+  """Blog pages show at most."""
+  readingSettingsPageForPosts: Int
+  """The ID of the page that should display the latest posts."""
+  readingSettingsPageOnFront: Int
+  """Blog pages show at most."""
+  readingSettingsPostsPerPage: Int
+  """What to show on the front page."""
+  readingSettingsShowOnFront: String
+  """Default post category."""
+  writingSettingsDefaultCategory: Int
+  """Default post format."""
+  writingSettingsDefaultPostFormat: String
+  """Convert emoticons like :-) and :-P to graphics on display."""
+  writingSettingsUseSmilies: Boolean
+}
+
+# ─── PageInfo ─────────────────────────────────────────────────────────────────
+
+"""Relay-compliant page information for cursor pagination."""
+type PageInfo {
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
+}
+
+# ─── Object Types ─────────────────────────────────────────────────────────────
+
+"""
+Avatars are profile images for users. WordPress by default uses the Gravatar service
+to host and fetch avatars from.
+"""
+type Avatar {
+  """The size of the avatar in pixels."""
+  size: Int
+  """Height of the avatar image."""
+  height: Int
+  """Width of the avatar image."""
+  width: Int
+  """URL for the default image or a default type."""
+  default: String
+  """Whether to always show the default image, never the Gravatar."""
+  forceDefault: Boolean
+  """What rating to display avatars up to."""
+  rating: String
+  """Type of url scheme to use. Typically HTTP vs. HTTPS."""
+  scheme: String
+  """HTML attributes to insert in the IMG element. Is not sanitized."""
+  extraAttr: String
+  """Whether the avatar was successfully found."""
+  foundAvatar: Boolean
+  """URL for the gravatar image source."""
+  url: String
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+}
+
+"""
+A plugin object.
+"""
+type Plugin implements Node {
+  """The globally unique identifier of the plugin object."""
+  id: ID!
+  """Display name of the plugin."""
+  name: String
+  """URI for the plugin website."""
+  pluginUri: String
+  """Description of the plugin."""
+  description: String
+  """Name of the plugin author(s), may also be a company name."""
+  author: String
+  """URI for the related author(s)/company website."""
+  authorUri: String
+  """Current version of the plugin."""
+  version: String
+  """Plugin path."""
+  path: String
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+}
+
+"""
+A theme object.
+"""
+type Theme implements Node {
+  """The globally unique identifier of the theme object."""
+  id: ID!
+  """The theme slug. Equivalent to WP_Theme->get_stylesheet()."""
+  slug: String
+  """Display name of the theme. Equivalent to WP_Theme->get("Name")."""
+  name: String
+  """The URL of the screenshot for the theme."""
+  screenshot: String
+  """A URI if the theme has a website associated with it."""
+  themeUri: String
+  """The description of the theme. Equivalent to WP_Theme->get("Description")."""
+  description: String
+  """Name of the theme author(s). Equivalent to WP_Theme->get("Author")."""
+  author: String
+  """URI for the author/company website. Equivalent to WP_Theme->get("AuthorURI")."""
+  authorUri: String
+  """Tags for the theme. Equivalent to WP_Theme->get("Tags")."""
+  tags: [String]
+  """The current version of the theme. Equivalent to WP_Theme->get("Version")."""
+  version: String
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+}
+
+"""
+A user role object.
+"""
+type UserRole implements Node {
+  """The globally unique identifier for the user role object."""
+  id: ID!
+  """The registered name of the role."""
+  name: String
+  """The display name of the role."""
+  displayName: String
+  """A list of capabilities this role has."""
+  capabilities: [String]
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+}
+
+"""
+A registered user account.
+"""
+type User implements Node & UniformResourceIdentifiable & Commenter & DatabaseIdentifier {
+  """The globally unique identifier for the user object."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """A list of capabilities (permissions) granted to the user."""
+  capabilities: [String]
+  """User metadata option name. Usually it will be "wp_capabilities"."""
+  capKey: String
+  """Description of the user."""
+  description: String
+  """Email address of the user. Equivalent to WP_User->user_email."""
+  email: String
+  """A complete list of capabilities including capabilities inherited from a role."""
+  extraCapabilities: [String]
+  """First name of the user. Equivalent to WP_User->user_first_name."""
+  firstName: String
+  """Last name of the user. Equivalent to WP_User->user_last_name."""
+  lastName: String
+  """Username for the user. Equivalent to WP_User->user_login."""
+  username: String
+  """Display name of the user. Equivalent to WP_User->display_name."""
+  name: String
+  """The date the user registered or was created."""
+  registeredDate: String
+  """Nickname of the user."""
+  nickname: String
+  """A website url that is associated with the user."""
+  url: String
+  """The slug for the user. Equivalent to WP_User->user_nicename."""
+  slug: String
+  """The nicename for the user. Equivalent to WP_User->user_nicename."""
+  nicename: String
+  """The preferred language locale set for the user."""
+  locale: String
+  """The URI for the user's page."""
+  uri: String
+  """The unique resource identifier path."""
+  link: String
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+  """Avatar object for the user."""
+  avatar(size: Int, forceDefault: Boolean, rating: AvatarRatingEnum): Avatar
+  """Connection between the User type and the UserRole type."""
+  roles(first: Int, last: Int, after: String, before: String): UserToUserRoleConnection
+  """Connection between the User and Revisions authored by the user."""
+  revisions(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): UserToRevisionsConnection
+  """Connection between the User and EnqueuedScripts."""
+  enqueuedScripts(first: Int, last: Int, after: String, before: String): UserToEnqueuedScriptConnection
+  """Connection between the User and EnqueuedStylesheets."""
+  enqueuedStylesheets(first: Int, last: Int, after: String, before: String): UserToEnqueuedStylesheetConnection
+  """Deprecated in favor of the databaseId field."""
+  userId: Int @deprecated(reason: "Deprecated in favor of the databaseId field")
+}
+
+"""
+A registered comment author.
+"""
+type CommentAuthor implements Node & Commenter {
+  """The globally unique identifier for the comment author object."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """The email for the comment author."""
+  email: String
+  """The name of the comment author."""
+  name: String
+  """The URL of the comment author's website."""
+  url: String
+  """Whether the author information is considered restricted."""
+  isRestricted: Boolean
+  """Avatar object for the comment author."""
+  avatar(size: Int, forceDefault: Boolean, rating: AvatarRatingEnum): Avatar
+}
+
+"""
+A response or reaction to content submitted by users.
+"""
+type Comment implements Node & DatabaseIdentifier & UniformResourceIdentifiable {
+  """The globally unique identifier for the comment object."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """User agent used to post the comment. Equivalent to WP_Comment->comment_agent."""
+  agent: String
+  """The approval status of the comment."""
+  status: CommentStatusEnum
+  """IP address of the author at the time of commenting."""
+  authorIp: String @deprecated(reason: "Use the ipAddress field on the edge between the comment and author")
+  """ID for the comment, unique among comments."""
+  commentId: Int @deprecated(reason: "Deprecated in favor of databaseId")
+  """Content of the comment."""
+  content(format: PostObjectFieldFormatEnum): String
+  """Date the comment was posted in local time."""
+  date: String
+  """Date the comment was posted in GMT."""
+  dateGmt: String
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Karma value for the comment."""
+  karma: Int
+  """The permalink of the comment."""
+  link: String
+  """The URI for the comment."""
+  uri: String
+  """The globally unique identifier of the parent comment node."""
+  parentId: ID
+  """The database id of the parent comment node or null if it is the root comment."""
+  parentDatabaseId: Int
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+  """Connection between the Comment type and its author (Commenter interface)."""
+  author: CommentToCommenterConnectionEdge
+  """Connection between the Comment type and its replies."""
+  replies(first: Int, last: Int, after: String, before: String, where: CommentsConnectionWhereArgs): CommentToCommentConnection
+}
+
+"""
+A connection from Comment to Comment (replies).
+"""
+type CommentToCommentConnection {
+  """The nodes of the connection, without the edges."""
+  nodes: [Comment]
+  """Edges for the CommentToCommentConnection connection."""
+  edges: [CommentToCommentConnectionEdge]
+  """Information about pagination in a connection."""
+  pageInfo: PageInfo!
+}
+
+type CommentToCommentConnectionEdge {
+  """A cursor for use in pagination."""
+  cursor: String
+  """The item at the end of the edge."""
+  node: Comment
+}
+
+"""
+Edge between a Comment and its author.
+"""
+type CommentToCommenterConnectionEdge {
+  """The node of the connection, without the edges."""
+  node: Commenter
+  """Email address representing the author for this particular comment."""
+  email: String
+  """IP address of the author at the time of making this comment."""
+  ipAddress: String
+  """The display name of the comment author for this particular comment."""
+  name: String
+  """The url entered for the comment author on this particular comment."""
+  url: String
+}
+
+"""
+A navigation menu.
+"""
+type Menu implements Node & DatabaseIdentifier {
+  """The globally unique identifier of the nav menu object."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """The number of items in the menu."""
+  count: Int
+  """WP ID of the nav menu (deprecated)."""
+  menuId: Int @deprecated(reason: "Deprecated in favor of the databaseId field")
+  """Display name of the menu. Equivalent to WP_Term->name."""
+  name: String
+  """The url friendly name of the menu. Equivalent to WP_Term->slug."""
+  slug: String
+  """The locations a menu is assigned to."""
+  locations: [MenuLocationEnum]
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Connection between the Menu type and its items."""
+  menuItems(first: Int, last: Int, after: String, before: String, where: MenuItemsConnectionWhereArgs): MenuToMenuItemConnection
+}
+
+"""Arguments for filtering menu item connections."""
+input MenuItemsConnectionWhereArgs {
+  """The database ID of the parent menu item."""
+  parentDatabaseId: Int
+  """The ID of the parent menu item."""
+  parentId: ID
+}
+
+"""
+A navigation menu item.
+"""
+type MenuItem implements Node & DatabaseIdentifier {
+  """The globally unique identifier of the nav menu item object."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """The globally unique identifier of the parent nav menu item object."""
+  parentId: ID
+  """The database id of the parent menu item or null if it is the root."""
+  parentDatabaseId: Int
+  """Class attribute for the menu item link."""
+  cssClasses: [String]
+  """Description of the menu item."""
+  description: String
+  """Label or title of the menu item."""
+  label: String
+  """Link relationship (XFN) of the menu item."""
+  linkRelationship: String
+  """WP ID of the menu item (deprecated)."""
+  menuItemId: Int @deprecated(reason: "Deprecated in favor of the databaseId field")
+  """Target attribute for the menu item link."""
+  target: String
+  """Title attribute for the menu item link."""
+  title: String
+  """URL or destination of the menu item."""
+  url: String
+  """The uri of the resource the menu item links to."""
+  uri: String
+  """Path for the resource. Relative path for internal resources. Absolute path for external resources."""
+  path: String
+  """Menu item order."""
+  order: Int
+  """The locations the menu item's Menu is assigned to."""
+  locations: [MenuLocationEnum]
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Connection between the MenuItem and its connected node."""
+  connectedNode: MenuItemToMenuItemLinkableConnectionEdge
+  """Connection between the MenuItem and its parent Menu."""
+  menu: MenuItemToMenuConnectionEdge
+  """Connection between the MenuItem and its child menu items."""
+  childItems(first: Int, last: Int, after: String, before: String): MenuItemToMenuItemConnection
+}
+
+type MenuItemToMenuItemLinkableConnectionEdge {
+  node: MenuItemLinkable
+}
+
+type MenuItemToMenuConnectionEdge {
+  node: Menu
+}
+
+type MenuItemToMenuItemConnection {
+  nodes: [MenuItem]
+  edges: [MenuItemToMenuItemConnectionEdge]
+  pageInfo: PageInfo!
+}
+
+type MenuItemToMenuItemConnectionEdge {
+  cursor: String
+  node: MenuItem
+}
+
+"""Label details for a post type."""
+type PostTypeLabelDetails {
+  """Default is "Add New" for both hierarchical and non-hierarchical types."""
+  addNew: String
+  """Label for adding a new singular item."""
+  addNewItem: String
+  """Label for all items."""
+  allItems: String
+  """Label to signify all statuses for the post type."""
+  archives: String
+  """Label for items with all attributes set."""
+  attributes: String
+  """Label for setting the featured image on a single item."""
+  featuredImage: String
+  """Label used when filtering items in the list view."""
+  filterItemsList: String
+  """Label for items list navigation."""
+  itemsListNavigation: String
+  """Label for the list of items."""
+  itemsList: String
+  """Label used to prefix parents of hierarchical items."""
+  parentItemColon: String
+  """Label used when no items are found."""
+  notFound: String
+  """Label used when no items are in the trash."""
+  notFoundInTrash: String
+  """Label used to remove the featured image."""
+  removeFeaturedImage: String
+  """Label for searching singular items."""
+  searchItems: String
+  """Label for setting the featured image."""
+  setFeaturedImage: String
+  """Name for one object of this post type."""
+  singularName: String
+  """Label for the featured image column."""
+  useFeaturedImage: String
+  """Label for viewing a singular item."""
+  viewItem: String
+  """Label for viewing post type archives."""
+  viewItems: String
+  """General name for the post type, usually plural."""
+  name: String
+  """Label for the add new button (menu item)."""
+  menuName: String
+}
+
+"""
+An Post Type object.
+"""
+type ContentType implements Node & UniformResourceIdentifiable {
+  """The globally unique identifier of the post-type object."""
+  id: ID!
+  """The internal name of the post type."""
+  name: String
+  """Display name of the content type."""
+  label: String
+  """Details about the content type labels."""
+  labels: PostTypeLabelDetails
+  """Description of the content type."""
+  description: String
+  """Whether a content type is intended for use publicly."""
+  public: Boolean
+  """Whether the content type is hierarchical."""
+  hierarchical: Boolean
+  """Whether to exclude nodes of this content type from front end search results."""
+  excludeFromSearch: Boolean
+  """Whether queries can be performed on the front end for the content type."""
+  publiclyQueryable: Boolean
+  """Whether to generate and allow a UI for managing this content type in the admin."""
+  showUi: Boolean
+  """Where to show the content type in the admin menu."""
+  showInMenu: Boolean
+  """Makes this content type available for selection in navigation menus."""
+  showInNavMenus: Boolean
+  """Makes this content type available via the admin bar."""
+  showInAdminBar: Boolean
+  """The position of this post type in the menu."""
+  menuPosition: Int
+  """The name of the icon file to display as a menu icon."""
+  menuIcon: String
+  """Whether this content type should have archives."""
+  hasArchive: Boolean
+  """Whether this content type should can be exported."""
+  canExport: Boolean
+  """Whether content of this type should be deleted when the author of it is deleted."""
+  deleteWithUser: Boolean
+  """Whether the content type is associated with the REST API."""
+  showInRest: Boolean
+  """Name of content type to display in REST API "wp/v2" namespace."""
+  restBase: String
+  """The REST Controller class assigned to handling this content type."""
+  restControllerClass: String
+  """Whether to add the content type to the GraphQL Schema."""
+  showInGraphql: Boolean
+  """The singular name of the content type within the GraphQL Schema."""
+  graphqlSingleName: String
+  """The plural name of the content type within the GraphQL Schema."""
+  graphqlPluralName: String
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Whether this page is set to the static front page."""
+  isFrontPage: Boolean!
+  """Whether this page is set to the blog posts page."""
+  isPostsPage: Boolean!
+  """URI for the content type object."""
+  uri: String
+  """Unique resource identifier path."""
+  link: String
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+  """Connection between the ContentType and its post objects."""
+  contentNodes(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): ContentTypeToContentNodeConnection
+  """Connection between the ContentType and its associated taxonomies."""
+  taxonomies(first: Int, last: Int, after: String, before: String): ContentTypeToTaxonomyConnection
+}
+
+"""
+A taxonomy object.
+"""
+type Taxonomy implements Node {
+  """The globally unique identifier of the taxonomy object."""
+  id: ID!
+  """The display name of the taxonomy. Equivalent to WP_Taxonomy->label."""
+  name: String
+  """Name of the taxonomy shown in the menu. Usually plural."""
+  label: String
+  """Description of the taxonomy. Equivalent to WP_Taxonomy->description."""
+  description: String
+  """Whether the taxonomy is publicly queryable."""
+  public: Boolean
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Whether the taxonomy is hierarchical."""
+  hierarchical: Boolean
+  """Whether to generate and allow a UI for managing terms in this taxonomy."""
+  showUi: Boolean
+  """Whether to show the taxonomy in the admin menu."""
+  showInMenu: Boolean
+  """Whether the taxonomy is available for selection in navigation menus."""
+  showInNavMenus: Boolean
+  """Whether to show the taxonomy as part of a tag cloud widget."""
+  showCloud: Boolean
+  """Whether to show the taxonomy in the quick/bulk edit panel."""
+  showInQuickEdit: Boolean
+  """Whether to display a column for the taxonomy on its post type listing screens."""
+  showInAdminColumn: Boolean
+  """Whether to add the post type route in the REST API "wp/v2" namespace."""
+  showInRest: Boolean
+  """Name of content type to display in REST API "wp/v2" namespace."""
+  restBase: String
+  """The REST Controller class assigned to handling this content type."""
+  restControllerClass: String
+  """Whether to add the post type to the GraphQL Schema."""
+  showInGraphql: Boolean
+  """The singular name of the post type within the GraphQL Schema."""
+  graphqlSingleName: String
+  """The plural name of the post type within the GraphQL Schema."""
+  graphqlPluralName: String
+  """Connection between the Taxonomy and its connected content types."""
+  connectedContentTypes(first: Int, last: Int, after: String, before: String): TaxonomyToContentTypeConnection
+  """Connection between the Taxonomy and its connected terms."""
+  connectedTerms(first: Int, last: Int, after: String, before: String): TaxonomyToTermNodeConnection
+}
+
+"""
+Media item metadata.
+"""
+type MediaItemMeta {
+  """Aperture measurement of the media item."""
+  aperture: Float
+  """Information about the camera used to create the media item."""
+  camera: String
+  """The text string description associated with the media item."""
+  caption: String
+  """Copyright information associated with the media item."""
+  copyright: String
+  """The date/time when the media was created."""
+  createdTimestamp: Int
+  """The original creator of the media item."""
+  credit: String
+  """The focal length value of the media item."""
+  focalLength: Float
+  """The ISO (International Organization for Standardization) value of the media item."""
+  iso: Int
+  """List of keywords used to describe or identfy the media item."""
+  keywords: [String]
+  """The vertical or horizontal aspect of the media item."""
+  orientation: String
+  """The shutter speed information of the media item."""
+  shutterSpeed: Float
+  """A useful title for the media item."""
+  title: String
+}
+
+"""
+Details of a specific media size."""
+type MediaSize {
+  """The file of the for the referenced size."""
+  file: String
+  """The filesize of the resource."""
+  fileSize: Int
+  """The height of the for the referenced size."""
+  height: String
+  """The mime type of the resource."""
+  mimeType: String
+  """The referenced size name."""
+  name: String
+  """The url of the for the referenced size."""
+  sourceUrl: String
+  """The width of the for the referenced size."""
+  width: String
+}
+
+"""
+Details of an image attachment.
+"""
+type MediaDetails {
+  """The height of the mediaItem."""
+  width: Int
+  """The height of the mediaItem."""
+  height: Int
+  """The filename of the mediaItem."""
+  file: String
+  """The path to the mediaItem relative to the uploads directory."""
+  path: String
+  """The available sizes of the mediaItem."""
+  sizes(exclude: [MediaItemSizeEnum], include: [MediaItemSizeEnum]): [MediaSize]
+  """Meta information associated with the mediaItem."""
+  meta: MediaItemMeta
+}
+
+"""
+An enqueued stylesheet asset."""
+type EnqueuedStylesheet implements Node & EnqueuedAsset {
+  """The globally unique ID of the enqueued stylesheet."""
+  id: ID!
+  """Dependencies needed to use this stylesheet."""
+  dependencies: [EnqueuedScript]
+  """Extra information needed for the asset."""
+  extra: String
+  """The handle of the enqueued stylesheet."""
+  handle: String
+  """The src of the enqueued stylesheet."""
+  src: String
+  """The version of the enqueued stylesheet."""
+  version: String
+  """Whether the enqueued stylesheet is RTL or not."""
+  isRtl: Boolean
+  """The media for which this stylesheet has been defined."""
+  media: String
+  """The relative path of the enqueued stylesheet."""
+  relativeSrc: String
+  """The suffix, generated when extra or version is defined."""
+  suffix: String
+  """The source map URL for the enqueued stylesheet."""
+  sourceUrl: String
+  """The title of the enqueued style."""
+  title: String
+  """The location of the enqueued style."""
+  after: [String]
+  """Whether the enqueued stylesheet is using inline style or an included file."""
+  inline: String
+  """The RTL version of the enqueued stylesheet."""
+  rtl: String
+}
+
+"""
+An enqueued script asset.
+"""
+type EnqueuedScript implements Node & EnqueuedAsset {
+  """The globally unique ID of the enqueued script."""
+  id: ID!
+  """Dependencies needed to use this script."""
+  dependencies: [EnqueuedScript]
+  """Extra information needed for the script."""
+  extra: String
+  """The handle of the enqueued script."""
+  handle: String
+  """The src of the enqueued script."""
+  src: String
+  """The version of the enqueued script."""
+  version: String
+  """The location of the enqueued script."""
+  location: ScriptLoadingGroupLocationEnum
+  """The loading strategy for the script."""
+  strategy: ScriptLoadingStrategyEnum
+}
+
+"""All of the registered settings."""
+type Settings {
+  """Allow people to submit comments on new posts. Discussion settings default comment status."""
+  discussionSettingsDefaultCommentStatus: String
+  """Allow link notifications from other blogs."""
+  discussionSettingsDefaultPingStatus: String
+  """A date format for all date strings."""
+  generalSettingsDateFormat: String
+  """Site tagline."""
+  generalSettingsDescription: String
+  """WordPress locale code."""
+  generalSettingsLanguage: String
+  """A day number of the week that the week should start on."""
+  generalSettingsStartOfWeek: Int
+  """A time format for all time strings."""
+  generalSettingsTimeFormat: String
+  """A city in the same timezone as you."""
+  generalSettingsTimezone: String
+  """Site title."""
+  generalSettingsTitle: String
+  """Site URL."""
+  generalSettingsUrl: String
+  """Blog pages show at most."""
+  readingSettingsPageForPosts: Int
+  """The ID of the page that should display the latest posts."""
+  readingSettingsPageOnFront: Int
+  """Blog pages show at most."""
+  readingSettingsPostsPerPage: Int
+  """What to show on the front page."""
+  readingSettingsShowOnFront: String
+  """Default post category."""
+  writingSettingsDefaultCategory: Int
+  """Default post format."""
+  writingSettingsDefaultPostFormat: String
+  """Convert emoticons like :-) and :-P to graphics on display."""
+  writingSettingsUseSmilies: Boolean
+}
+
+# ─── Post / Page (built-in WordPress post types) ──────────────────────────────
+
+"""
+A post object (WordPress built-in "post" post type).
+"""
+type Post implements Node & ContentNode & UniformResourceIdentifiable & DatabaseIdentifier & NodeWithAuthor & NodeWithComments & NodeWithContentEditor & NodeWithExcerpt & NodeWithFeaturedImage & NodeWithRevisions & NodeWithTitle & NodeWithTrackbacks & Previewable & MenuItemLinkable {
+  """The globally unique identifier for the post."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """Post title."""
+  title(format: PostObjectFieldFormatEnum): String
+  """The content of the post."""
+  content(format: PostObjectFieldFormatEnum): String
+  """The excerpt of the post."""
+  excerpt(format: PostObjectFieldFormatEnum): String
+  """Post publishing date."""
+  date: String
+  """The publishing date set in GMT."""
+  dateGmt: String
+  """The local modified time."""
+  modified: String
+  """The GMT modified time."""
+  modifiedGmt: String
+  """The uri slug for the post."""
+  slug: String
+  """The current status of the object."""
+  status: String
+  """The permalink of the post."""
+  link: String
+  """The URI of the post."""
+  uri: String
+  """The global unique identifier (GUID)."""
+  guid: String
+  """The desired slug of the post."""
+  desiredSlug: String
+  """The enclosure for the object."""
+  enclosure: String
+  """Whether the object is a node in the preview state."""
+  isPreview: Boolean
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+  """The number of comments on the post."""
+  commentCount: Int
+  """Whether the comments are open or closed for this particular post."""
+  commentStatus: String
+  """Whether the pings are open or closed."""
+  pingStatus: String
+  """URLs that have been pinged."""
+  pinged: [String]
+  """URLs queued to be pinged."""
+  toPing: [String]
+  """A field used for ordering posts."""
+  menuOrder: Int
+  """The password used to protect the content of the object."""
+  password: String
+  """True if the node is a revision of another node."""
+  isRevision: Boolean
+  """Whether a sticky post."""
+  isSticky: Boolean!
+  """The database identifier of the author of the node."""
+  authorDatabaseId: Int
+  """The globally unique identifier of the author of the node."""
+  authorId: ID
+  """The database identifier of the featured image."""
+  featuredImageDatabaseId: Int
+  """Globally unique ID of the featured image."""
+  featuredImageId: ID
+  """The database id of the preview node."""
+  previewRevisionDatabaseId: Int
+  """Whether the object is a revision."""
+  previewRevisionId: ID
+  """The post type of this post."""
+  postFormats: PostToPostFormatConnection
+  """Connection between the Post type and its author."""
+  author: NodeWithAuthorToUserConnectionEdge
+  """Connection between the Post and its featured image."""
+  featuredImage: NodeWithFeaturedImageToMediaItemConnectionEdge
+  """Connection between the Post and categories."""
+  categories(first: Int, last: Int, after: String, before: String, where: PostToCategoryConnectionWhereArgs): PostToCategoryConnection
+  """Connection between the Post and tags."""
+  tags(first: Int, last: Int, after: String, before: String, where: PostToTagConnectionWhereArgs): PostToTagConnection
+  """Connection between the Post type and comments."""
+  comments(first: Int, last: Int, after: String, before: String, where: CommentsConnectionWhereArgs): PostToCommentConnection
+  """Connection between the Post type and revisions."""
+  revisions(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): PostToRevisionConnection
+  """Connection between the Post and its preview."""
+  preview: PreviewableToPreviewConnectionEdge
+  """Connection between Post and EnqueuedScripts."""
+  enqueuedScripts(first: Int, last: Int, after: String, before: String): ContentNodeToEnqueuedScriptConnection
+  """Connection between Post and EnqueuedStylesheets."""
+  enqueuedStylesheets(first: Int, last: Int, after: String, before: String): ContentNodeToEnqueuedStylesheetConnection
+  """Connection between Post and its content template."""
+  template: ContentTemplate
+  """The edit lock information."""
+  editingLockedBy: ContentNodeToEditLockConnectionEdge
+}
+
+"""
+A page object (WordPress built-in "page" post type).
+"""
+type Page implements Node & ContentNode & UniformResourceIdentifiable & DatabaseIdentifier & NodeWithAuthor & NodeWithComments & NodeWithContentEditor & NodeWithExcerpt & NodeWithFeaturedImage & NodeWithPageAttributes & NodeWithRevisions & NodeWithTitle & Previewable & HierarchicalContentNode & MenuItemLinkable {
+  """The globally unique identifier for the page."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """Page title."""
+  title(format: PostObjectFieldFormatEnum): String
+  """The content of the page."""
+  content(format: PostObjectFieldFormatEnum): String
+  """The excerpt of the page."""
+  excerpt(format: PostObjectFieldFormatEnum): String
+  """Page publishing date."""
+  date: String
+  """The publishing date set in GMT."""
+  dateGmt: String
+  """The local modified time."""
+  modified: String
+  """The GMT modified time."""
+  modifiedGmt: String
+  """The uri slug for the page."""
+  slug: String
+  """The current status of the object."""
+  status: String
+  """The permalink of the page."""
+  link: String
+  """The URI of the page."""
+  uri: String
+  """The global unique identifier (GUID)."""
+  guid: String
+  """The desired slug of the page."""
+  desiredSlug: String
+  """The enclosure for the object."""
+  enclosure: String
+  """Whether the object is a node in the preview state."""
+  isPreview: Boolean
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+  """The number of comments on the page."""
+  commentCount: Int
+  """Whether the comments are open or closed for this particular page."""
+  commentStatus: String
+  """Whether the pings are open or closed."""
+  pingStatus: String
+  """A field used for ordering posts."""
+  menuOrder: Int
+  """The database id of the parent page."""
+  parentDatabaseId: Int
+  """The globally unique identifier of the parent page."""
+  parentId: ID
+  """The password used to protect the content of the object."""
+  password: String
+  """True if the node is a revision of another node."""
+  isRevision: Boolean
+  """Whether this page is set to the static front page."""
+  isFrontPage: Boolean!
+  """Whether this page is set to the blog posts page."""
+  isPostsPage: Boolean!
+  """Whether this page is set to the privacy policy page."""
+  isPrivacyPage: Boolean!
+  """The database identifier of the author of the node."""
+  authorDatabaseId: Int
+  """The globally unique identifier of the author of the node."""
+  authorId: ID
+  """The database identifier of the featured image."""
+  featuredImageDatabaseId: Int
+  """Globally unique ID of the featured image."""
+  featuredImageId: ID
+  """The database id of the preview node."""
+  previewRevisionDatabaseId: Int
+  """Whether the object is a revision."""
+  previewRevisionId: ID
+  """Connection between the Page type and its author."""
+  author: NodeWithAuthorToUserConnectionEdge
+  """Connection between the Page and its featured image."""
+  featuredImage: NodeWithFeaturedImageToMediaItemConnectionEdge
+  """Connection between the Page type and comments."""
+  comments(first: Int, last: Int, after: String, before: String, where: CommentsConnectionWhereArgs): PageToCommentConnection
+  """Connection between the Page type and child pages."""
+  children(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): PageToChildPageConnection
+  """Connection between the Page and its parent page."""
+  parent: PageToParentConnectionEdge
+  """Connection between the Page type and revisions."""
+  revisions(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): PageToRevisionConnection
+  """Connection between the Page and its preview."""
+  preview: PreviewableToPreviewConnectionEdge
+  """Connection between Page and EnqueuedScripts."""
+  enqueuedScripts(first: Int, last: Int, after: String, before: String): ContentNodeToEnqueuedScriptConnection
+  """Connection between Page and EnqueuedStylesheets."""
+  enqueuedStylesheets(first: Int, last: Int, after: String, before: String): ContentNodeToEnqueuedStylesheetConnection
+  """Connection between Page and its content template."""
+  template: ContentTemplate
+  """The edit lock information."""
+  editingLockedBy: ContentNodeToEditLockConnectionEdge
+  """Connection between the Page type and its ancestors."""
+  ancestors(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): HierarchicalContentNodeToContentNodeAncestorsConnection
+}
+
+"""
+An attachment (media item) post object.
+"""
+type MediaItem implements Node & ContentNode & UniformResourceIdentifiable & DatabaseIdentifier & NodeWithAuthor & NodeWithComments & NodeWithTitle & HierarchicalContentNode & MenuItemLinkable {
+  """The globally unique identifier for the attachment."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """The title of the attachment."""
+  title(format: PostObjectFieldFormatEnum): String
+  """Post publishing date."""
+  date: String
+  """The publishing date set in GMT."""
+  dateGmt: String
+  """The local modified time."""
+  modified: String
+  """The GMT modified time."""
+  modifiedGmt: String
+  """The uri slug for the attachment."""
+  slug: String
+  """The current status of the object."""
+  status: String
+  """The permalink of the attachment."""
+  link: String
+  """The URI of the attachment."""
+  uri: String
+  """The global unique identifier (GUID)."""
+  guid: String
+  """The desired slug of the object."""
+  desiredSlug: String
+  """Whether the object is a node in the preview state."""
+  isPreview: Boolean
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+  """The number of comments on the attachment."""
+  commentCount: Int
+  """Whether the comments are open or closed."""
+  commentStatus: String
+  """The database id of the parent post for the attachment."""
+  parentDatabaseId: Int
+  """The globally unique identifier of the parent post for the attachment."""
+  parentId: ID
+  """The database identifier of the author of the node."""
+  authorDatabaseId: Int
+  """The globally unique identifier of the author of the node."""
+  authorId: ID
+  """Alternative text to display when resource is not displayed."""
+  altText: String
+  """The caption for the resource."""
+  caption(format: PostObjectFieldFormatEnum): String
+  """Description of the image (stored as post_content)."""
+  description(format: PostObjectFieldFormatEnum): String
+  """The mime type of the media item."""
+  mimeType: String
+  """The source URL of the media item."""
+  sourceUrl(size: MediaItemSizeEnum): String
+  """The sizes attribute value for an image."""
+  srcSet(size: MediaItemSizeEnum): String
+  """Width and height of the media item."""
+  mediaDetails: MediaDetails
+  """The mediaItemUrl of the media item."""
+  mediaItemUrl: String
+  """The enclosure for the object."""
+  enclosure: String
+  """The database id of the preview node."""
+  previewRevisionDatabaseId: Int
+  """Whether the object is a revision."""
+  previewRevisionId: ID
+  """Connection between the MediaItem type and its author."""
+  author: NodeWithAuthorToUserConnectionEdge
+  """Connection between the MediaItem type and comments."""
+  comments(first: Int, last: Int, after: String, before: String, where: CommentsConnectionWhereArgs): MediaItemToCommentConnection
+  """Connection between the MediaItem type and its parent post."""
+  parent: MediaItemToParentConnectionEdge
+  """Connection between MediaItem and EnqueuedScripts."""
+  enqueuedScripts(first: Int, last: Int, after: String, before: String): ContentNodeToEnqueuedScriptConnection
+  """Connection between MediaItem and EnqueuedStylesheets."""
+  enqueuedStylesheets(first: Int, last: Int, after: String, before: String): ContentNodeToEnqueuedStylesheetConnection
+  """Connection between MediaItem and its content template."""
+  template: ContentTemplate
+  """The edit lock information."""
+  editingLockedBy: ContentNodeToEditLockConnectionEdge
+  """Connection between the MediaItem type and its ancestors."""
+  ancestors(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): HierarchicalContentNodeToContentNodeAncestorsConnection
+}
+
+"""Category term (hierarchical taxonomy)."""
+type Category implements Node & TermNode & UniformResourceIdentifiable & DatabaseIdentifier & HierarchicalTermNode & HierarchicalNode & MenuItemLinkable {
+  """The globally unique identifier for the category object."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """The number of objects connected to the category."""
+  count: Int
+  """The description of the category."""
+  description: String
+  """The URL of the category."""
+  link: String
+  """The human friendly name of the category."""
+  name: String
+  """An alphanumeric identifier for the category unique to its type."""
+  slug: String
+  """The name of the taxonomy that the object is associated with."""
+  taxonomyName: String
+  """The ID of the term group that this term object belongs to."""
+  termGroupId: Int
+  """The taxonomy ID that the object is associated with."""
+  termTaxonomyId: Int
+  """The unique resource identifier path."""
+  uri: String
+  """The globally unique ID of the parent category."""
+  parentId: ID
+  """The database ID of the parent category."""
+  parentDatabaseId: Int
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Connection between Category and its posts."""
+  posts(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): CategoryToPostConnection
+  """Connection between the Category and its children."""
+  children(first: Int, last: Int, after: String, before: String): CategoryToChildCategoryConnection
+  """Connection between the Category and its parent."""
+  parent: CategoryToParentCategoryConnectionEdge
+  """Connection between the Category and its ancestors."""
+  ancestors(first: Int, last: Int, after: String, before: String): CategoryToAncestorsCategoryConnection
+  """Connection between the Category and its taxonomy."""
+  taxonomy: CategoryToTaxonomyConnectionEdge
+  """Connection between the Category and its content types."""
+  contentNodes(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): TermNodeToContentNodeConnection
+}
+
+"""Post tag (non-hierarchical taxonomy)."""
+type Tag implements Node & TermNode & UniformResourceIdentifiable & DatabaseIdentifier & MenuItemLinkable {
+  """The globally unique identifier for the tag object."""
+  id: ID!
+  """Identifies the primary key from the database."""
+  databaseId: Int!
+  """The number of objects connected to the tag."""
+  count: Int
+  """The description of the tag."""
+  description: String
+  """The URL of the tag."""
+  link: String
+  """The human friendly name of the tag."""
+  name: String
+  """An alphanumeric identifier for the tag unique to its type."""
+  slug: String
+  """The name of the taxonomy that the object is associated with."""
+  taxonomyName: String
+  """The ID of the term group that this term object belongs to."""
+  termGroupId: Int
+  """The taxonomy ID that the object is associated with."""
+  termTaxonomyId: Int
+  """The unique resource identifier path."""
+  uri: String
+  """Whether the node is a Content Node."""
+  isContentNode: Boolean!
+  """Whether the node is a Term Node."""
+  isTermNode: Boolean!
+  """Whether the object is restricted from the current viewer."""
+  isRestricted: Boolean
+  """Connection between Tag and its posts."""
+  posts(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): TagToPostConnection
+  """Connection between the Tag and its taxonomy."""
+  taxonomy: TagToTaxonomyConnectionEdge
+  """Connection between the Tag and its content types."""
+  contentNodes(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): TermNodeToContentNodeConnection
+}
+
+# ─── Connection / Edge types (abbreviated for major connections) ──────────────
+
+type NodeWithAuthorToUserConnectionEdge { node: User }
+type NodeWithFeaturedImageToMediaItemConnectionEdge { node: MediaItem }
+type PreviewableToPreviewConnectionEdge { node: ContentNode }
+type ContentNodeToEditLockConnectionEdge {
+  node: User
+  lockTimestamp: String
+}
+
+type UserToUserRoleConnection {
+  nodes: [UserRole]
+  edges: [UserToUserRoleConnectionEdge]
+  pageInfo: PageInfo!
+}
+type UserToUserRoleConnectionEdge { cursor: String; node: UserRole }
+
+type UserToRevisionsConnection {
+  nodes: [ContentNode]
+  edges: [UserToRevisionsConnectionEdge]
+  pageInfo: PageInfo!
+}
+type UserToRevisionsConnectionEdge { cursor: String; node: ContentNode }
+
+type UserToEnqueuedScriptConnection {
+  nodes: [EnqueuedScript]
+  edges: [UserToEnqueuedScriptConnectionEdge]
+  pageInfo: PageInfo!
+}
+type UserToEnqueuedScriptConnectionEdge { cursor: String; node: EnqueuedScript }
+
+type UserToEnqueuedStylesheetConnection {
+  nodes: [EnqueuedStylesheet]
+  edges: [UserToEnqueuedStylesheetConnectionEdge]
+  pageInfo: PageInfo!
+}
+type UserToEnqueuedStylesheetConnectionEdge { cursor: String; node: EnqueuedStylesheet }
+
+type MenuToMenuItemConnection {
+  nodes: [MenuItem]
+  edges: [MenuToMenuItemConnectionEdge]
+  pageInfo: PageInfo!
+}
+type MenuToMenuItemConnectionEdge { cursor: String; node: MenuItem }
+
+type PostToPostFormatConnection {
+  nodes: [PostFormat]
+  edges: [PostToPostFormatConnectionEdge]
+  pageInfo: PageInfo!
+}
+type PostToPostFormatConnectionEdge { cursor: String; node: PostFormat }
+
+"""A post format term."""
+type PostFormat implements Node & TermNode & UniformResourceIdentifiable & DatabaseIdentifier {
+  id: ID!
+  databaseId: Int!
+  count: Int
+  description: String
+  link: String
+  name: String
+  slug: String
+  taxonomyName: String
+  termGroupId: Int
+  termTaxonomyId: Int
+  uri: String
+  isContentNode: Boolean!
+  isTermNode: Boolean!
+  posts(first: Int, last: Int, after: String, before: String): PostFormatToPostConnection
+}
+
+type PostFormatToPostConnection {
+  nodes: [Post]
+  edges: [PostFormatToPostConnectionEdge]
+  pageInfo: PageInfo!
+}
+type PostFormatToPostConnectionEdge { cursor: String; node: Post }
+
+type PostToCategoryConnection {
+  nodes: [Category]
+  edges: [PostToCategoryConnectionEdge]
+  pageInfo: PageInfo!
+}
+type PostToCategoryConnectionEdge { cursor: String; node: Category }
+
+input PostToCategoryConnectionWhereArgs {
+  childOf: Int
+  childless: Boolean
+  descriptionLike: String
+  exclude: [ID]
+  excludeTree: [ID]
+  hideEmpty: Boolean
+  hierarchical: Boolean
+  include: [ID]
+  name: [String]
+  nameLike: String
+  objectIds: [ID]
+  order: OrderEnum
+  orderby: TermObjectsConnectionOrderbyEnum
+  padCounts: Boolean
+  parent: Int
+  search: String
+  slug: [String]
+  termTaxonomId: [ID]
+  termTaxonomyId: [ID]
+  updateTermMetaCache: Boolean
+}
+
+input PostToTagConnectionWhereArgs {
+  childOf: Int
+  childless: Boolean
+  descriptionLike: String
+  exclude: [ID]
+  excludeTree: [ID]
+  hideEmpty: Boolean
+  hierarchical: Boolean
+  include: [ID]
+  name: [String]
+  nameLike: String
+  objectIds: [ID]
+  order: OrderEnum
+  orderby: TermObjectsConnectionOrderbyEnum
+  padCounts: Boolean
+  parent: Int
+  search: String
+  slug: [String]
+  termTaxonomId: [ID]
+  termTaxonomyId: [ID]
+  updateTermMetaCache: Boolean
+}
+
+type PostToTagConnection {
+  nodes: [Tag]
+  edges: [PostToTagConnectionEdge]
+  pageInfo: PageInfo!
+}
+type PostToTagConnectionEdge { cursor: String; node: Tag }
+
+type PostToCommentConnection {
+  nodes: [Comment]
+  edges: [PostToCommentConnectionEdge]
+  pageInfo: PageInfo!
+}
+type PostToCommentConnectionEdge { cursor: String; node: Comment }
+
+type PostToRevisionConnection {
+  nodes: [Post]
+  edges: [PostToRevisionConnectionEdge]
+  pageInfo: PageInfo!
+}
+type PostToRevisionConnectionEdge { cursor: String; node: Post }
+
+type PageToCommentConnection {
+  nodes: [Comment]
+  edges: [PageToCommentConnectionEdge]
+  pageInfo: PageInfo!
+}
+type PageToCommentConnectionEdge { cursor: String; node: Comment }
+
+type PageToChildPageConnection {
+  nodes: [Page]
+  edges: [PageToChildPageConnectionEdge]
+  pageInfo: PageInfo!
+}
+type PageToChildPageConnectionEdge { cursor: String; node: Page }
+
+type PageToParentConnectionEdge { node: Page }
+
+type PageToRevisionConnection {
+  nodes: [Page]
+  edges: [PageToRevisionConnectionEdge]
+  pageInfo: PageInfo!
+}
+type PageToRevisionConnectionEdge { cursor: String; node: Page }
+
+type MediaItemToCommentConnection {
+  nodes: [Comment]
+  edges: [MediaItemToCommentConnectionEdge]
+  pageInfo: PageInfo!
+}
+type MediaItemToCommentConnectionEdge { cursor: String; node: Comment }
+
+type MediaItemToParentConnectionEdge { node: ContentNode }
+
+type CategoryToPostConnection {
+  nodes: [Post]
+  edges: [CategoryToPostConnectionEdge]
+  pageInfo: PageInfo!
+}
+type CategoryToPostConnectionEdge { cursor: String; node: Post }
+
+type CategoryToChildCategoryConnection {
+  nodes: [Category]
+  edges: [CategoryToChildCategoryConnectionEdge]
+  pageInfo: PageInfo!
+}
+type CategoryToChildCategoryConnectionEdge { cursor: String; node: Category }
+
+type CategoryToParentCategoryConnectionEdge { node: Category }
+
+type CategoryToAncestorsCategoryConnection {
+  nodes: [Category]
+  edges: [CategoryToAncestorsCategoryConnectionEdge]
+  pageInfo: PageInfo!
+}
+type CategoryToAncestorsCategoryConnectionEdge { cursor: String; node: Category }
+
+type CategoryToTaxonomyConnectionEdge { node: Taxonomy }
+
+type TagToPostConnection {
+  nodes: [Post]
+  edges: [TagToPostConnectionEdge]
+  pageInfo: PageInfo!
+}
+type TagToPostConnectionEdge { cursor: String; node: Post }
+
+type TagToTaxonomyConnectionEdge { node: Taxonomy }
+
+type TermNodeToContentNodeConnection {
+  nodes: [ContentNode]
+  edges: [TermNodeToContentNodeConnectionEdge]
+  pageInfo: PageInfo!
+}
+type TermNodeToContentNodeConnectionEdge { cursor: String; node: ContentNode }
+
+type ContentTypeToContentNodeConnection {
+  nodes: [ContentNode]
+  edges: [ContentTypeToContentNodeConnectionEdge]
+  pageInfo: PageInfo!
+}
+type ContentTypeToContentNodeConnectionEdge { cursor: String; node: ContentNode }
+
+type ContentTypeToTaxonomyConnection {
+  nodes: [Taxonomy]
+  edges: [ContentTypeToTaxonomyConnectionEdge]
+  pageInfo: PageInfo!
+}
+type ContentTypeToTaxonomyConnectionEdge { cursor: String; node: Taxonomy }
+
+type TaxonomyToContentTypeConnection {
+  nodes: [ContentType]
+  edges: [TaxonomyToContentTypeConnectionEdge]
+  pageInfo: PageInfo!
+}
+type TaxonomyToContentTypeConnectionEdge { cursor: String; node: ContentType }
+
+type TaxonomyToTermNodeConnection {
+  nodes: [TermNode]
+  edges: [TaxonomyToTermNodeConnectionEdge]
+  pageInfo: PageInfo!
+}
+type TaxonomyToTermNodeConnectionEdge { cursor: String; node: TermNode }
+
+type ContentNodeToEnqueuedScriptConnection {
+  nodes: [EnqueuedScript]
+  edges: [ContentNodeToEnqueuedScriptConnectionEdge]
+  pageInfo: PageInfo!
+}
+type ContentNodeToEnqueuedScriptConnectionEdge { cursor: String; node: EnqueuedScript }
+
+type ContentNodeToEnqueuedStylesheetConnection {
+  nodes: [EnqueuedStylesheet]
+  edges: [ContentNodeToEnqueuedStylesheetConnectionEdge]
+  pageInfo: PageInfo!
+}
+type ContentNodeToEnqueuedStylesheetConnectionEdge { cursor: String; node: EnqueuedStylesheet }
+
+type HierarchicalContentNodeToContentNodeAncestorsConnection {
+  nodes: [ContentNode]
+  edges: [HierarchicalContentNodeToContentNodeAncestorsConnectionEdge]
+  pageInfo: PageInfo!
+}
+type HierarchicalContentNodeToContentNodeAncestorsConnectionEdge { cursor: String; node: ContentNode }
+
+# Root-level connection types
+
+type RootQueryToUserConnection {
+  nodes: [User]
+  edges: [RootQueryToUserConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToUserConnectionEdge { cursor: String; node: User }
+
+type RootQueryToCommentConnection {
+  nodes: [Comment]
+  edges: [RootQueryToCommentConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToCommentConnectionEdge { cursor: String; node: Comment }
+
+type RootQueryToPostConnection {
+  nodes: [Post]
+  edges: [RootQueryToPostConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToPostConnectionEdge { cursor: String; node: Post }
+
+type RootQueryToPageConnection {
+  nodes: [Page]
+  edges: [RootQueryToPageConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToPageConnectionEdge { cursor: String; node: Page }
+
+type RootQueryToMediaItemConnection {
+  nodes: [MediaItem]
+  edges: [RootQueryToMediaItemConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToMediaItemConnectionEdge { cursor: String; node: MediaItem }
+
+type RootQueryToCategoryConnection {
+  nodes: [Category]
+  edges: [RootQueryToCategoryConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToCategoryConnectionEdge { cursor: String; node: Category }
+
+type RootQueryToTagConnection {
+  nodes: [Tag]
+  edges: [RootQueryToTagConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToTagConnectionEdge { cursor: String; node: Tag }
+
+type RootQueryToMenuConnection {
+  nodes: [Menu]
+  edges: [RootQueryToMenuConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToMenuConnectionEdge { cursor: String; node: Menu }
+
+type RootQueryToPluginConnection {
+  nodes: [Plugin]
+  edges: [RootQueryToPluginConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToPluginConnectionEdge { cursor: String; node: Plugin }
+
+type RootQueryToThemeConnection {
+  nodes: [Theme]
+  edges: [RootQueryToThemeConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToThemeConnectionEdge { cursor: String; node: Theme }
+
+type RootQueryToContentTypeConnection {
+  nodes: [ContentType]
+  edges: [RootQueryToContentTypeConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToContentTypeConnectionEdge { cursor: String; node: ContentType }
+
+type RootQueryToTaxonomyConnection {
+  nodes: [Taxonomy]
+  edges: [RootQueryToTaxonomyConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToTaxonomyConnectionEdge { cursor: String; node: Taxonomy }
+
+type RootQueryToEnqueuedScriptConnection {
+  nodes: [EnqueuedScript]
+  edges: [RootQueryToEnqueuedScriptConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToEnqueuedScriptConnectionEdge { cursor: String; node: EnqueuedScript }
+
+type RootQueryToEnqueuedStylesheetConnection {
+  nodes: [EnqueuedStylesheet]
+  edges: [RootQueryToEnqueuedStylesheetConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToEnqueuedStylesheetConnectionEdge { cursor: String; node: EnqueuedStylesheet }
+
+type RootQueryToContentNodeConnection {
+  nodes: [ContentNode]
+  edges: [RootQueryToContentNodeConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToContentNodeConnectionEdge { cursor: String; node: ContentNode }
+
+type RootQueryToUserRoleConnection {
+  nodes: [UserRole]
+  edges: [RootQueryToUserRoleConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToUserRoleConnectionEdge { cursor: String; node: UserRole }
+
+type RootQueryToTermNodeConnection {
+  nodes: [TermNode]
+  edges: [RootQueryToTermNodeConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToTermNodeConnectionEdge { cursor: String; node: TermNode }
+
+type RootQueryToPostFormatConnection {
+  nodes: [PostFormat]
+  edges: [RootQueryToPostFormatConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToPostFormatConnectionEdge { cursor: String; node: PostFormat }
+
+type RootQueryToRevisionsConnection {
+  nodes: [ContentNode]
+  edges: [RootQueryToRevisionsConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToRevisionsConnectionEdge { cursor: String; node: ContentNode }
+
+# ─── Arguments for user filtering ─────────────────────────────────────────────
+
+input UsersConnectionWhereArgs {
+  """Array of userIds to exclude."""
+  exclude: [Int]
+  """Pass an array of post types to filter results to users who have published posts in those post types."""
+  hasPublishedPosts: [ContentTypeEnum]
+  """Array of userIds to include."""
+  include: [Int]
+  """The user login."""
+  login: String
+  """An array of logins to include. Users matching one of these logins will be included in results."""
+  loginIn: [String]
+  """An array of logins to exclude. Users matching one of these logins will not be included in results."""
+  loginNotIn: [String]
+  """The user nicename."""
+  nicename: String
+  """An array of nicenames to include. Users matching one of these nicenames will be included in results."""
+  nicenameIn: [String]
+  """An array of nicenames to exclude. Users matching one of these nicenames will not be included in results."""
+  nicenameNotIn: [String]
+  """What paramater to use to order the objects by."""
+  orderby: [UsersConnectionOrderbyInput]
+  """An array of role names that users must match to be included in results. Note that this is an inclusive list: users must match *each* role."""
+  role: UserRoleEnum
+  """An array of role names. Matched users must have at least one of these roles."""
+  roleIn: [UserRoleEnum]
+  """An array of role names to exclude. Users matching one or more of these roles will not be included in results."""
+  roleNotIn: [UserRoleEnum]
+  """Search keyword. Searches for possible string matches on columns. When "searchColumns" is left empty, it tries to determine which column to search in based on search string."""
+  search: String
+  """Array of column names to be searched. Accepts 'ID', 'login', 'nicename', 'email', 'url'."""
+  searchColumns: [UsersConnectionSearchColumnEnum]
+}
+
+"""User role enum for filtering users by role."""
+enum UserRoleEnum {
+  ADMINISTRATOR
+  AUTHOR
+  CONTRIBUTOR
+  EDITOR
+  SUBSCRIBER
+}
+
+"""Arguments for filtering comment connections."""
+input RootQueryToCommentConnectionWhereArgs {
+  """Comment author email address."""
+  authorEmail: String
+  """Array of author IDs to include comments for."""
+  authorIn: [ID]
+  """Array of author IDs to exclude comments for."""
+  authorNotIn: [ID]
+  """Comment author URL."""
+  authorUrl: String
+  """Array of comment IDs to include."""
+  commentIn: [ID]
+  """Array of IDs of users whose unapproved comments will be returned."""
+  commentNotIn: [ID]
+  """Include comments of a given type."""
+  commentType: String
+  """Include comments from a given array of comment types."""
+  commentTypeIn: [String]
+  """Exclude comments from a given array of comment types."""
+  commentTypeNotIn: String
+  """Content object ID to limit results by."""
+  contentId: ID
+  """Array of content object IDs to include affiliated comments for."""
+  contentIdIn: [ID]
+  """Array of content object IDs to exclude affiliated comments for."""
+  contentIdNotIn: [ID]
+  """Content object name (i.e. slug) to retrieve affiliated comments for."""
+  contentName: String
+  """Content Object parent ID to retrieve affiliated comments for."""
+  contentParent: Int
+  """Array of content object statuses to retrieve affiliated comments for."""
+  contentStatus: [PostStatusEnum]
+  """Content object type or array of types to retrieve affiliated comments for."""
+  contentType: [ContentTypeEnum]
+  """Array of IDs or email addresses of users whose unapproved comments will be returned."""
+  includeUnapproved: [ID]
+  """Karma score to retrieve matching comments for."""
+  karma: Int
+  """The cardinality of the order of the connection."""
+  order: OrderEnum
+  """Field to order the comments by."""
+  orderby: CommentsConnectionOrderbyEnum
+  """Parent ID of comment to retrieve children of."""
+  parent: Int
+  """Array of parent IDs of comments to retrieve children for."""
+  parentIn: [ID]
+  """Array of parent IDs of comments *not* to retrieve children for."""
+  parentNotIn: [ID]
+  """Search term(s) to retrieve matching comments for."""
+  search: String
+  """Comment status to limit results by."""
+  status: String
+  """Include comments for a specific user ID."""
+  userId: ID
+}
+
+# ─── Mutation Payloads ────────────────────────────────────────────────────────
+
+type CreateCommentPayload {
+  clientMutationId: String
+  comment: Comment
+  success: Boolean
+}
+
+type UpdateCommentPayload {
+  clientMutationId: String
+  comment: Comment
+}
+
+type DeleteCommentPayload {
+  clientMutationId: String
+  comment: Comment
+  deletedId: ID
+}
+
+type RestoreCommentPayload {
+  clientMutationId: String
+  comment: Comment
+  restoredId: ID
+}
+
+type CreatePostPayload {
+  clientMutationId: String
+  post: Post
+}
+
+type UpdatePostPayload {
+  clientMutationId: String
+  post: Post
+}
+
+type DeletePostPayload {
+  clientMutationId: String
+  deletedId: ID
+  post: Post
+}
+
+type CreatePagePayload {
+  clientMutationId: String
+  page: Page
+}
+
+type UpdatePagePayload {
+  clientMutationId: String
+  page: Page
+}
+
+type DeletePagePayload {
+  clientMutationId: String
+  deletedId: ID
+  page: Page
+}
+
+type CreateMediaItemPayload {
+  clientMutationId: String
+  mediaItem: MediaItem
+}
+
+type UpdateMediaItemPayload {
+  clientMutationId: String
+  mediaItem: MediaItem
+}
+
+type DeleteMediaItemPayload {
+  clientMutationId: String
+  deletedId: ID
+  mediaItem: MediaItem
+}
+
+type CreateCategoryPayload {
+  clientMutationId: String
+  category: Category
+}
+
+type UpdateCategoryPayload {
+  clientMutationId: String
+  category: Category
+}
+
+type DeleteCategoryPayload {
+  clientMutationId: String
+  deletedId: ID
+  category: Category
+}
+
+type CreateTagPayload {
+  clientMutationId: String
+  tag: Tag
+}
+
+type UpdateTagPayload {
+  clientMutationId: String
+  tag: Tag
+}
+
+type DeleteTagPayload {
+  clientMutationId: String
+  deletedId: ID
+  tag: Tag
+}
+
+type CreateUserPayload {
+  clientMutationId: String
+  user: User
+}
+
+type UpdateUserPayload {
+  clientMutationId: String
+  user: User
+}
+
+type DeleteUserPayload {
+  clientMutationId: String
+  deletedId: ID
+  user: User
+}
+
+type RegisterUserPayload {
+  clientMutationId: String
+  user: User
+}
+
+type SendPasswordResetEmailPayload {
+  clientMutationId: String
+  user: User
+  success: Boolean
+}
+
+type ResetUserPasswordPayload {
+  clientMutationId: String
+  user: User
+}
+
+type UpdateSettingsPayload {
+  clientMutationId: String
+  allSettings: Settings
+  discussionSettingsDefaultCommentStatus: String
+  discussionSettingsDefaultPingStatus: String
+  generalSettingsDateFormat: String
+  generalSettingsDescription: String
+  generalSettingsLanguage: String
+  generalSettingsStartOfWeek: Int
+  generalSettingsTimeFormat: String
+  generalSettingsTimezone: String
+  generalSettingsTitle: String
+  generalSettingsUrl: String
+  readingSettingsPageForPosts: Int
+  readingSettingsPageOnFront: Int
+  readingSettingsPostsPerPage: Int
+  readingSettingsShowOnFront: String
+  writingSettingsDefaultCategory: Int
+  writingSettingsDefaultPostFormat: String
+  writingSettingsUseSmilies: Boolean
+}
+
+# ─── Root Types ───────────────────────────────────────────────────────────────
+
+"""The root entry point into the Graph."""
+type Query {
+  """Entry point to get all settings for the site."""
+  allSettings: Settings
+
+  """Returns a single Comment node."""
+  comment(id: ID!, idType: CommentNodeIdTypeEnum): Comment
+
+  """Connection between the RootQuery type and the Comment type."""
+  comments(first: Int, last: Int, after: String, before: String, where: RootQueryToCommentConnectionWhereArgs): RootQueryToCommentConnection
+
+  """Fetch an object using the database ID."""
+  node(id: ID): Node
+
+  """Fetch a node by URI."""
+  nodeByUri(uri: String!): UniformResourceIdentifiable
+
+  """Returns a single Post node."""
+  post(id: ID!, idType: ContentNodeIdTypeEnum, asPreview: Boolean): Post
+
+  """Connection between the RootQuery type and Post nodes."""
+  posts(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): RootQueryToPostConnection
+
+  """Returns a single Page node."""
+  page(id: ID!, idType: ContentNodeIdTypeEnum, asPreview: Boolean): Page
+
+  """Connection between the RootQuery type and Page nodes."""
+  pages(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): RootQueryToPageConnection
+
+  """Returns a single MediaItem node."""
+  mediaItem(id: ID!, idType: ContentNodeIdTypeEnum, asPreview: Boolean): MediaItem
+
+  """Connection between the RootQuery type and MediaItem nodes."""
+  mediaItems(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): RootQueryToMediaItemConnection
+
+  """Returns a single User node."""
+  user(id: ID!, idType: UserNodeIdTypeEnum): User
+
+  """Connection between the RootQuery type and User nodes."""
+  users(first: Int, last: Int, after: String, before: String, where: UsersConnectionWhereArgs): RootQueryToUserConnection
+
+  """Returns the current user."""
+  viewer: User
+
+  """Returns a single UserRole node."""
+  userRole(id: ID!): UserRole
+
+  """Connection between the RootQuery type and UserRole nodes."""
+  userRoles(first: Int, last: Int, after: String, before: String): RootQueryToUserRoleConnection
+
+  """Returns a single Category term."""
+  category(id: ID!, idType: TermNodeIdTypeEnum): Category
+
+  """Connection between the RootQuery type and Category terms."""
+  categories(first: Int, last: Int, after: String, before: String, where: RootQueryToCategoryConnectionWhereArgs): RootQueryToCategoryConnection
+
+  """Returns a single Tag term."""
+  tag(id: ID!, idType: TermNodeIdTypeEnum): Tag
+
+  """Connection between the RootQuery type and Tag terms."""
+  tags(first: Int, last: Int, after: String, before: String, where: RootQueryToTagConnectionWhereArgs): RootQueryToTagConnection
+
+  """Returns a single PostFormat term."""
+  postFormat(id: ID!, idType: TermNodeIdTypeEnum): PostFormat
+
+  """Connection between the RootQuery type and PostFormat terms."""
+  postFormats(first: Int, last: Int, after: String, before: String): RootQueryToPostFormatConnection
+
+  """Returns a single Menu node."""
+  menu(id: ID!, idType: MenuNodeIdTypeEnum): Menu
+
+  """Connection between the RootQuery type and Menu nodes."""
+  menus(first: Int, last: Int, after: String, before: String, where: RootQueryToMenuConnectionWhereArgs): RootQueryToMenuConnection
+
+  """Returns a single MenuItem node."""
+  menuItem(id: ID!, idType: MenuItemNodeIdTypeEnum): MenuItem
+
+  """Connection between the RootQuery type and MenuItem nodes."""
+  menuItems(first: Int, last: Int, after: String, before: String, where: MenuItemsConnectionWhereArgs): RootQueryToMenuItemConnection
+
+  """Returns a single Plugin node."""
+  plugin(id: ID!): Plugin
+
+  """Connection between the RootQuery type and Plugin nodes."""
+  plugins(first: Int, last: Int, after: String, before: String, where: RootQueryToPluginConnectionWhereArgs): RootQueryToPluginConnection
+
+  """Returns a single Theme node."""
+  theme(id: ID!): Theme
+
+  """Connection between the RootQuery type and Theme nodes."""
+  themes(first: Int, last: Int, after: String, before: String): RootQueryToThemeConnection
+
+  """Returns a single ContentType object."""
+  contentType(id: ID!, idType: ContentTypeIdTypeEnum): ContentType
+
+  """Connection between the RootQuery type and ContentType nodes."""
+  contentTypes(first: Int, last: Int, after: String, before: String): RootQueryToContentTypeConnection
+
+  """Returns a single ContentNode."""
+  contentNode(id: ID!, idType: ContentNodeIdTypeEnum, contentType: ContentTypeEnum, asPreview: Boolean): ContentNode
+
+  """Connection between the RootQuery type and all ContentNode types."""
+  contentNodes(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): RootQueryToContentNodeConnection
+
+  """Returns a single Taxonomy object."""
+  taxonomy(id: ID!, idType: TaxonomyIdTypeEnum): Taxonomy
+
+  """Returns a single TermNode."""
+  termNode(id: ID!, idType: TermNodeIdTypeEnum, taxonomy: TaxonomyEnum): TermNode
+
+  """Connection between the RootQuery type and all TermNode types."""
+  terms(first: Int, last: Int, after: String, before: String, where: RootQueryToTermNodeConnectionWhereArgs): RootQueryToTermNodeConnection
+
+  """Connection between the RootQuery type and registered scripts."""
+  registeredScripts(first: Int, last: Int, after: String, before: String): RootQueryToEnqueuedScriptConnection
+
+  """Connection between the RootQuery type and registered stylesheets."""
+  registeredStylesheets(first: Int, last: Int, after: String, before: String): RootQueryToEnqueuedStylesheetConnection
+
+  """Connection between the RootQuery type and revisions."""
+  revisions(first: Int, last: Int, after: String, before: String, where: PostObjectsConnectionWhereArgs): RootQueryToRevisionsConnection
+}
+
+"""Arguments for filtering the root category connection."""
+input RootQueryToCategoryConnectionWhereArgs {
+  childOf: Int
+  childless: Boolean
+  descriptionLike: String
+  exclude: [ID]
+  excludeTree: [ID]
+  hideEmpty: Boolean
+  hierarchical: Boolean
+  include: [ID]
+  name: [String]
+  nameLike: String
+  objectIds: [ID]
+  order: OrderEnum
+  orderby: TermObjectsConnectionOrderbyEnum
+  padCounts: Boolean
+  parent: Int
+  search: String
+  slug: [String]
+  termTaxonomId: [ID]
+  termTaxonomyId: [ID]
+  updateTermMetaCache: Boolean
+}
+
+"""Arguments for filtering the root tag connection."""
+input RootQueryToTagConnectionWhereArgs {
+  childOf: Int
+  childless: Boolean
+  descriptionLike: String
+  exclude: [ID]
+  excludeTree: [ID]
+  hideEmpty: Boolean
+  hierarchical: Boolean
+  include: [ID]
+  name: [String]
+  nameLike: String
+  objectIds: [ID]
+  order: OrderEnum
+  orderby: TermObjectsConnectionOrderbyEnum
+  padCounts: Boolean
+  parent: Int
+  search: String
+  slug: [String]
+  termTaxonomId: [ID]
+  termTaxonomyId: [ID]
+  updateTermMetaCache: Boolean
+}
+
+"""Arguments for filtering the root menu connection."""
+input RootQueryToMenuConnectionWhereArgs {
+  id: Int
+  location: MenuLocationEnum
+  slug: String
+}
+
+"""Arguments for filtering plugin connections."""
+input RootQueryToPluginConnectionWhereArgs {
+  search: String
+  status: PluginStatusEnum
+  stati: [PluginStatusEnum]
+}
+
+"""Arguments for filtering term node connections."""
+input RootQueryToTermNodeConnectionWhereArgs {
+  childOf: Int
+  childless: Boolean
+  descriptionLike: String
+  exclude: [ID]
+  excludeTree: [ID]
+  hideEmpty: Boolean
+  hierarchical: Boolean
+  include: [ID]
+  name: [String]
+  nameLike: String
+  objectIds: [ID]
+  order: OrderEnum
+  orderby: TermObjectsConnectionOrderbyEnum
+  padCounts: Boolean
+  parent: Int
+  search: String
+  slug: [String]
+  taxonomies: [TaxonomyEnum]
+  termTaxonomId: [ID]
+  termTaxonomyId: [ID]
+  updateTermMetaCache: Boolean
+}
+
+type RootQueryToMenuItemConnection {
+  nodes: [MenuItem]
+  edges: [RootQueryToMenuItemConnectionEdge]
+  pageInfo: PageInfo!
+}
+type RootQueryToMenuItemConnectionEdge { cursor: String; node: MenuItem }
+
+"""The root mutation."""
+type Mutation {
+  """Create a new Comment."""
+  createComment(input: CreateCommentInput!): CreateCommentPayload
+  """Update an existing Comment."""
+  updateComment(input: UpdateCommentInput!): UpdateCommentPayload
+  """Delete a Comment."""
+  deleteComment(input: DeleteCommentInput!): DeleteCommentPayload
+  """Restore a trashed Comment."""
+  restoreComment(input: RestoreCommentInput!): RestoreCommentPayload
+
+  """Create a new Post."""
+  createPost(input: CreatePostInput!): CreatePostPayload
+  """Update an existing Post."""
+  updatePost(input: UpdatePostInput!): UpdatePostPayload
+  """Delete a Post."""
+  deletePost(input: DeletePostInput!): DeletePostPayload
+
+  """Create a new Page."""
+  createPage(input: CreatePageInput!): CreatePagePayload
+  """Update an existing Page."""
+  updatePage(input: UpdatePageInput!): UpdatePagePayload
+  """Delete a Page."""
+  deletePage(input: DeletePageInput!): DeletePagePayload
+
+  """Create a new MediaItem."""
+  createMediaItem(input: CreateMediaItemInput!): CreateMediaItemPayload
+  """Update an existing MediaItem."""
+  updateMediaItem(input: UpdateMediaItemInput!): UpdateMediaItemPayload
+  """Delete a MediaItem."""
+  deleteMediaItem(input: DeleteMediaItemInput!): DeleteMediaItemPayload
+
+  """Create a new Category."""
+  createCategory(input: CreateCategoryInput!): CreateCategoryPayload
+  """Update an existing Category."""
+  updateCategory(input: UpdateCategoryInput!): UpdateCategoryPayload
+  """Delete a Category."""
+  deleteCategory(input: DeleteCategoryInput!): DeleteCategoryPayload
+
+  """Create a new Tag."""
+  createTag(input: CreateTagInput!): CreateTagPayload
+  """Update an existing Tag."""
+  updateTag(input: UpdateTagInput!): UpdateTagPayload
+  """Delete a Tag."""
+  deleteTag(input: DeleteTagInput!): DeleteTagPayload
+
+  """Create a new User."""
+  createUser(input: CreateUserInput!): CreateUserPayload
+  """Update an existing User."""
+  updateUser(input: UpdateUserInput!): UpdateUserPayload
+  """Delete a User."""
+  deleteUser(input: DeleteUserInput!): DeleteUserPayload
+  """Register a User."""
+  registerUser(input: RegisterUserInput!): RegisterUserPayload
+
+  """Send a password reset email to the user."""
+  sendPasswordResetEmail(input: SendPasswordResetEmailInput!): SendPasswordResetEmailPayload
+  """Reset a user's password."""
+  resetUserPassword(input: ResetUserPasswordInput!): ResetUserPasswordPayload
+
+  """Update site settings."""
+  updateSettings(input: UpdateSettingsInput!): UpdateSettingsPayload
+
+  """Increase the count."""
+  increaseCount(count: Int): Int
+}
+
+"""Input for deleting a comment."""
+input DeleteCommentInput {
+  clientMutationId: String
+  forceDelete: Boolean
+  id: ID!
+}
+
+"""Input for restoring a comment."""
+input RestoreCommentInput {
+  clientMutationId: String
+  id: ID!
+}
+
+"""Input for updating a media item."""
+input UpdateMediaItemInput {
+  clientMutationId: String
+  authorId: ID
+  caption: String
+  commentStatus: String
+  content: String
+  date: String
+  dateGmt: String
+  description: String
+  filePath: String
+  fileType: MimeTypeEnum
+  id: ID!
+  parentId: ID
+  pingStatus: String
+  slug: String
+  status: MediaItemStatusEnum
+  title: String
+}
+
+"""Input for deleting a media item."""
+input DeleteMediaItemInput {
+  clientMutationId: String
+  forceDelete: Boolean
+  id: ID!
+}
+
+"""Input for registering a user."""
+input RegisterUserInput {
+  clientMutationId: String
+  aim: String
+  description: String
+  displayName: String
+  email: String
+  firstName: String
+  jabber: String
+  lastName: String
+  locale: String
+  nicename: String
+  nickname: String
+  password: String
+  registered: String
+  richEditing: String
+  username: String!
+  websiteUrl: String
+  yim: String
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}

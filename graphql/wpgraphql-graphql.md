@@ -1,242 +1,27 @@
 # WPGraphQL GraphQL API
 
-Source: https://www.wpgraphql.com/docs/introduction
+WPGraphQL is an open-source WordPress plugin that adds a full-featured, extendable GraphQL API to any WordPress installation. It exposes WordPress content — including posts, pages, custom post types, users, comments, taxonomies, menus, media items, plugins, themes, and site settings — as a queryable GraphQL schema with Relay-compliant cursor-based pagination. The plugin ships with a built-in GraphiQL IDE in the WordPress dashboard and a flexible type registration system that allows the schema to be extended by other plugins.
 
-## Overview
+The endpoint is host-specific, determined by each WordPress installation. By default the path is `/graphql` appended to the site's base URL, but this can be changed in the WordPress admin settings.
 
-WPGraphQL exposes all WordPress data through a single GraphQL endpoint, typically available at `https://your-site.com/graphql`. The schema is fully introspectable and can be explored using the built-in GraphiQL IDE in the WordPress admin dashboard.
+**Endpoint:** https://example.com/graphql *(host-specific; configurable per installation)*
 
-## Endpoint
-
-- **Default endpoint:** `https://your-wordpress-site.com/graphql`
-- **Method:** POST (recommended) or GET (for caching via HTTP layer)
-- **Content-Type:** `application/json`
-
-## Core Types
-
-### Posts and Pages
-
-```graphql
-query GetPosts {
-  posts(first: 10) {
-    nodes {
-      id
-      title
-      date
-      slug
-      excerpt
-      content
-      author {
-        node {
-          name
-        }
-      }
-      categories {
-        nodes {
-          name
-          slug
-        }
-      }
-      tags {
-        nodes {
-          name
-          slug
-        }
-      }
-      featuredImage {
-        node {
-          sourceUrl
-          altText
-        }
-      }
-    }
-  }
-}
-```
-
-### Users
-
-```graphql
-query GetUsers {
-  users(first: 10) {
-    nodes {
-      id
-      name
-      email
-      slug
-      roles {
-        nodes {
-          name
-        }
-      }
-    }
-  }
-}
-```
-
-### Menus
-
-```graphql
-query GetMenu {
-  menu(id: "primary", idType: LOCATION) {
-    menuItems {
-      nodes {
-        id
-        label
-        url
-        parentId
-      }
-    }
-  }
-}
-```
-
-### Taxonomies and Terms
-
-```graphql
-query GetCategories {
-  categories(first: 20) {
-    nodes {
-      id
-      name
-      slug
-      count
-      description
-      parent {
-        node {
-          name
-        }
-      }
-    }
-  }
-}
-```
-
-### Media
-
-```graphql
-query GetMediaItems {
-  mediaItems(first: 10) {
-    nodes {
-      id
-      title
-      sourceUrl
-      mimeType
-      mediaDetails {
-        width
-        height
-        sizes {
-          name
-          sourceUrl
-          width
-          height
-        }
-      }
-    }
-  }
-}
-```
-
-## Mutations
-
-### Create Post
-
-```graphql
-mutation CreatePost($input: CreatePostInput!) {
-  createPost(input: $input) {
-    post {
-      id
-      title
-      status
-      slug
-    }
-  }
-}
-```
-
-### Update Post
-
-```graphql
-mutation UpdatePost($input: UpdatePostInput!) {
-  updatePost(input: $input) {
-    post {
-      id
-      title
-      modified
-    }
-  }
-}
-```
-
-### Delete Post
-
-```graphql
-mutation DeletePost($id: ID!) {
-  deletePost(input: { id: $id }) {
-    deletedId
-    post {
-      title
-    }
-  }
-}
-```
-
-## Pagination
-
-WPGraphQL uses cursor-based pagination for all list connections.
-
-```graphql
-query GetPostsWithPagination($after: String) {
-  posts(first: 10, after: $after) {
-    pageInfo {
-      hasNextPage
-      hasPreviousPage
-      startCursor
-      endCursor
-    }
-    nodes {
-      id
-      title
-      slug
-    }
-  }
-}
-```
-
-- **Default limit:** 10 nodes per request
-- **Maximum limit:** 100 nodes per request (configurable via `graphql_connection_max_query_amount` filter)
+**Documentation:** https://www.wpgraphql.com/docs/introduction
 
 ## Authentication
 
-WPGraphQL supports two authentication patterns:
+WPGraphQL supports multiple authentication approaches:
 
-1. **WordPress Nonce:** For requests made within the WordPress admin context
-2. **JWT Authentication:** Via the WPGraphQL JWT Authentication plugin (third-party)
-3. **Application Passwords:** Native WordPress feature supported for API requests
+- **WordPress Nonce** — cookie/nonce authentication for requests made within the WordPress admin or from the same origin.
+- **JWT Authentication** — stateless token-based auth via the WPGraphQL JWT Authentication extension plugin. Tokens are obtained via a `login` mutation and passed as a Bearer token in the `Authorization` header.
+- **Application Passwords** — native WordPress Application Passwords (WordPress 5.6+) passed via HTTP Basic Auth.
 
-```
-Authorization: Bearer <jwt_token>
-```
+Unauthenticated requests receive publicly visible content only. Private posts, draft content, and user email addresses require appropriate WordPress capabilities.
 
-## Schema Extension
-
-The schema can be extended using PHP filter hooks:
-
-```php
-add_action('graphql_register_types', function() {
-  register_graphql_field('Post', 'customField', [
-    'type' => 'String',
-    'resolve' => function($post) {
-      return get_post_meta($post->databaseId, 'custom_field', true);
-    }
-  ]);
-});
-```
-
-## Notable Extensions
-
-- **WPGraphQL for ACF** — exposes Advanced Custom Fields
-- **WPGraphQL for WooCommerce (WooGraphQL)** — adds e-commerce data
-- **WPGraphQL Smart Cache** — adds tag-based cache invalidation
-- **WPGraphQL JWT Authentication** — adds JWT-based auth
-- **WPGraphQL Yoast SEO** — exposes Yoast SEO meta fields
+**References:**
+- Documentation: https://www.wpgraphql.com/docs/introduction
+- GettingStarted: https://www.wpgraphql.com/docs/quick-start
+- Authentication: https://www.wpgraphql.com/docs/authentication-and-authorization
+- GraphiQL IDE: https://www.wpgraphql.com/docs/using-the-graphiql-ide
+- GitHub Source: https://github.com/wp-graphql/wp-graphql
+- WordPress Plugin: https://wordpress.org/plugins/wp-graphql/
