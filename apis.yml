@@ -9,7 +9,7 @@ description: >-
   ships with a GraphiQL IDE in the WordPress dashboard and supports custom
   post types, ACF fields, WooCommerce, and dozens of extension plugins through
   a flexible schema registration system.
-image: https://kinlane-productions2.s3.amazonaws.com/apis-json/apis-json-logo.jpg
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
 url: https://raw.githubusercontent.com/api-evangelist/wpgraphql/refs/heads/main/apis.yml
 created: '2026-06-14'
 modified: '2026-06-14'
