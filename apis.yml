@@ -57,6 +57,8 @@ apis:
       - type: Performance
         url: https://www.wpgraphql.com/docs/performance
 common:
+  - type: DomainSecurity
+    url: security/wpgraphql-domain-security.yml
   - type: Website
     url: https://www.wpgraphql.com/
   - type: Documentation
