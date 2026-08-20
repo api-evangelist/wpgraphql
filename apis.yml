@@ -31,6 +31,14 @@ tags:
   - WordPress
   - Headless CMS
   - Content Management
+  - Open-Source
+  - Plugin
+  - Decoupled WordPress
+tags_raw:
+  - GraphQL
+  - WordPress
+  - Headless CMS
+  - Content Management
   - Open Source
   - Plugin
   - Decoupled WordPress
@@ -46,6 +54,13 @@ apis:
     humanURL: https://www.wpgraphql.com/
     baseURL: https://example.com/graphql
     tags:
+      - WordPress
+      - GraphQL
+      - content-api
+      - Headless CMS
+      - Posts
+      - taxonomies
+    tags_raw:
       - WordPress
       - GraphQL
       - Content API
