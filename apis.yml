@@ -9,6 +9,17 @@ description: >-
   ships with a GraphiQL IDE in the WordPress dashboard and supports custom
   post types, ACF fields, WooCommerce, and dozens of extension plugins through
   a flexible schema registration system.
+deliveryModel:
+  model: saas
+  open_source: false
+  commercial: true
+  callable_host: false
+  label: Hosted service · you call their endpoint
+  confidence: medium
+  source:
+  - pricing
+  generated: '2026-08-28'
+  method: derived
 accessModel:
   pricing: unknown
   onboarding: unknown
