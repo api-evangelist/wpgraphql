@@ -42,7 +42,7 @@ tags:
   - WordPress
   - Headless CMS
   - Content Management
-  - Open-Source
+  - Open Source
   - Plugins
   - Decoupled WordPress
 tags_raw:
@@ -53,6 +53,7 @@ tags_raw:
   - Open Source
   - Plugin
   - Decoupled WordPress
+  - Open-Source
 apis:
   - aid: wpgraphql:wpgraphql-api
     name: WPGraphQL API
