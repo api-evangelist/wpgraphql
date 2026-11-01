@@ -64,39 +64,93 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Open-source WordPress plugin that exposes a full-featured extendable GraphQL API for WordPress data including posts, pages, users, menus, taxonomies, media, and plugins.
+Open-source WordPress plugin that exposes a full-featured extendable GraphQL API for WordPress data including posts, pages, users, menus, taxonomies, media, and plugins. Created by Jason Bahl and now supported by Automattic as a Canonical Plugin, WPGraphQL enables headless WordPress development with modern JavaScript frameworks like Next.js, Svelte, and Astro. The plugin ships with a GraphiQL IDE in the WordPress dashboard and supports custom post types, ACF fields, WooCommerce, and dozens of extension plugins through a flexible schema registration system.
 
-- **Website:** https://www.wpgraphql.com/
-- **Documentation:** https://www.wpgraphql.com/docs/introduction
-- **GitHub:** https://github.com/wp-graphql/wp-graphql
-- **WordPress.org:** https://wordpress.org/plugins/wp-graphql/
-- **Open Collective:** https://opencollective.com/wp-graphql
+**Areas:** GraphQL · WordPress · Headless CMS · Content Management · Open Source · Plugins · Decoupled WordPress
 
-## Overview
+## WPGraphQL on APIs.io
 
-WPGraphQL transforms any WordPress site into a headless CMS by providing a full GraphQL API for all WordPress core data types. Created by Jason Bahl and backed by Automattic as a Canonical Plugin, WPGraphQL enables developers to build decoupled frontends using modern frameworks like Next.js, Svelte, Astro, and SvelteKit while content creators continue using the WordPress admin they know.
+Everything profiled for WPGraphQL is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/wpgraphql/](https://apis.io/providers/wpgraphql/)** — or go straight to one of the APIs or properties below.
 
-The plugin ships with a GraphiQL IDE directly in the WordPress dashboard, making it easy to explore the schema and test queries without additional tooling.
+### APIs (1)
 
-## Key Features
+- [WPGraphQL API](https://apis.io/apis/wpgraphql/wpgraphql-api/) — Extendable GraphQL API for WordPress that exposes posts, pages, custom post types, users, menus, taxonomies, media, and settings as GraphQL types and…
 
-- Full GraphQL API for posts, pages, custom post types, users, menus, taxonomies, and media
-- Built-in GraphiQL IDE in the WordPress admin dashboard
-- Cursor-based pagination with up to 100 nodes per request
-- Extendable schema via PHP hooks (`register_graphql_field`, `register_graphql_connection`)
-- Authentication via WordPress nonces, application passwords, or JWT (via extension)
-- WPGraphQL Smart Cache for tag-based cache invalidation
-- Support for WooCommerce, Advanced Custom Fields, Yoast SEO, and many other plugins via extensions
-- Free and open source (GPL v2 or later)
+### Published properties
 
-## Repository Contents
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
 
-- `apis.yml` — APIs.json 0.19 catalog entry for WPGraphQL
-- `graphql/wpgraphql-graphql.md` — GraphQL schema overview, example queries and mutations
-- `plans/wpgraphql-plans.md` — Pricing and plan information (free/open source)
-- `rate-limits/wpgraphql-rate-limits.md` — Rate limiting behavior and mitigation strategies
-- `finops/wpgraphql-finops.md` — Infrastructure cost analysis and total cost of ownership
+#### GraphQL (1)
 
-## Maintainer
+GraphQL schemas.
 
-Kin Lane (kin@apievangelist.com) — [API Evangelist](https://apievangelist.com)
+- [WPGraphQL GraphQL API](https://apis.io/graphqls/wpgraphql/wpgraphql-graphql/)
+
+#### Security (1)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Wpgraphql Domain Security](https://apis.io/security/wpgraphql/wpgraphql-domain-security/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://www.wpgraphql.com/)
+- [Documentation](https://www.wpgraphql.com/docs/introduction)
+- [Pricing](https://www.wpgraphql.com/)
+- [Blog](https://www.wpgraphql.com/blog)
+- [GitHub](https://github.com/wp-graphql)
+
+## API Evangelist rating
+
+**Kin Score 25.5** — emerging · rubric 0.24.0 · scored 2026-10-17
+
+| Facet | Score |
+|---|---|
+| Discoverability | 66.1 |
+| Contract quality | 39.4 |
+| Contract governance | 0.0 |
+| Operational transparency | 2.6 |
+| Developer ergonomics | 35.7 |
+| Access clarity | 10.5 |
+
+**Agent readiness 18.0** — agent-aware
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | — |
+| Reversibility Documented | — |
+| MCP Server | — |
+| Auth Clarity | bearer (partial credit) |
+| Idempotency | — |
+| Error Semantics | — |
+| OpenAPI Examples | — |
+| Rate Limit Signal | documented (partial credit) |
+| Event Surface Described | — |
+| Agent Skills | — |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+
+**Regulatory alignment 11.8** — Horizontal (data, software, accessibility, platform)
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/wpgraphql/](https://apis.io/providers/wpgraphql/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for WPGraphQL: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/wpgraphql/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
